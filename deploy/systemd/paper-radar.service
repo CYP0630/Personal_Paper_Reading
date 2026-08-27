@@ -9,5 +9,5 @@ Type=oneshot
 WorkingDirectory=%h/Personal_Paper_Reading
 EnvironmentFile=-%h/.config/paper-radar/env
 Environment=PYTHONUNBUFFERED=1
-ExecStart=%h/Personal_Paper_Reading/.venv/bin/paper-radar discover --cache-dir %h/.cache/paper-radar --output-root %h/.local/share/paper-radar
-
+Environment=PYTHONPATH=%h/Personal_Paper_Reading/src
+ExecStart=/usr/bin/python3 -m paper_radar discover --cache-dir %h/.cache/paper-radar --output-root %h/.local/share/paper-radar

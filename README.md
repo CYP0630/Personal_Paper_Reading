@@ -87,7 +87,7 @@ report per-source counts and errors so partial results remain auditable.
 The production layout keeps generated data and caches outside the Git working
 tree:
 
-- repository and virtual environment: `~/Personal_Paper_Reading`;
+- repository and optional virtual environment: `~/Personal_Paper_Reading`;
 - secret environment: `~/.config/paper-radar/env` (mode `0600`);
 - JSON and Markdown output: `~/.local/share/paper-radar`;
 - HTTP cache: `~/.cache/paper-radar`.
@@ -111,6 +111,8 @@ systemctl --user start paper-radar.service
 
 The timer runs daily at 07:30 in `America/New_York`, catches up after downtime,
 and applies a delay of up to ten minutes to avoid synchronized API traffic.
+The installer prefers a virtual environment and falls back to the system Python
+when `python3-venv` is unavailable and PyYAML is already installed.
 
 Useful checks:
 

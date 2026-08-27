@@ -12,10 +12,18 @@ if [[ ! -f "$repo_dir/pyproject.toml" ]]; then
   exit 1
 fi
 
-python3 -m venv "$repo_dir/.venv"
-"$repo_dir/.venv/bin/python" -m pip install --upgrade pip
-"$repo_dir/.venv/bin/python" -m pip install -e "$repo_dir"
-"$repo_dir/.venv/bin/paper-radar" validate-config --config "$repo_dir/config/topics.yaml"
+if python3 -m venv "$repo_dir/.venv" 2>/dev/null; then
+  "$repo_dir/.venv/bin/python" -m pip install --upgrade pip
+  "$repo_dir/.venv/bin/python" -m pip install -e "$repo_dir"
+  "$repo_dir/.venv/bin/paper-radar" validate-config --config "$repo_dir/config/topics.yaml"
+else
+  echo "python3-venv is unavailable; checking the system Python fallback"
+  python3 -c "import yaml" || {
+    echo "PyYAML is missing; install python3-venv or python3-yaml" >&2
+    exit 1
+  }
+  PYTHONPATH="$repo_dir/src" python3 -m paper_radar validate-config --config "$repo_dir/config/topics.yaml"
+fi
 
 install -d -m 700 "$config_dir"
 install -d -m 755 "$user_unit_dir" "$output_dir" "$cache_dir"
@@ -34,4 +42,3 @@ echo "Installed paper-radar in $repo_dir"
 echo "Secret environment file: $config_dir/env"
 echo "Output directory: $output_dir"
 systemctl --user list-timers paper-radar.timer --no-pager
-
