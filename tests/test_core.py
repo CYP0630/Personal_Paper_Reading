@@ -292,6 +292,29 @@ class CoreTests(unittest.TestCase):
             self.assertIn("../../library/papers/arxiv-1/deep-read.md", index)
             self.assertEqual(extract_one_sentence(note), "这是核心结论。")
 
+    def test_delivery_assets_only_include_markdown_links(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            assets = root / "assets"
+            assets.mkdir()
+            linked = assets / "figure-1.png"
+            temporary_page = assets / "_page1.png"
+            linked.write_bytes(b"png")
+            temporary_page.write_bytes(b"png")
+            note = root / "deep-read.md"
+            note.write_text("![](assets/figure-1.png)\n", encoding="utf-8")
+            item = DeepReader._item(
+                {"canonical_id": "arxiv:1", "title": "Test", "url": "https://example.com"},
+                1,
+                "arxiv-1",
+                status="complete",
+                evidence="full_text_pdf",
+                note_path=note,
+                pdf_path=None,
+                assets_dir=assets,
+            )
+            self.assertEqual(item.asset_paths, [str(linked.resolve())])
+
 
 if __name__ == "__main__":
     unittest.main()

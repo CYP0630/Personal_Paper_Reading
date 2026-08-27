@@ -193,10 +193,12 @@ class DeepReader:
         pdf_path = paper_dir / "source.pdf"
         page_path = paper_dir / "source.html"
         assets_dir = paper_dir / "assets"
+        temporary_dir = paper_dir / "tmp"
         status_path = paper_dir / "status.json"
         log_path = paper_dir / "codex.log"
         paper_dir.mkdir(parents=True, exist_ok=True)
         assets_dir.mkdir(parents=True, exist_ok=True)
+        temporary_dir.mkdir(parents=True, exist_ok=True)
         self._write_json(paper_dir / "metadata.json", paper)
 
         if local_pdf is not None:
@@ -244,6 +246,7 @@ class DeepReader:
             paper,
             note_path=note_path,
             assets_dir=assets_dir,
+            temporary_dir=temporary_dir,
             source_path=source_path,
             evidence=evidence,
             download_error=download_error,
@@ -339,6 +342,7 @@ class DeepReader:
         *,
         note_path: Path,
         assets_dir: Path,
+        temporary_dir: Path,
         source_path: Path | None,
         evidence: str,
         download_error: str,
@@ -370,7 +374,7 @@ class DeepReader:
 6. “核心方法”要解释整体架构、关键模块、训练/推理流程和重要目标函数；公式使用 MathJax `$...$` 或 `$$...$$`。
 7. “数据与评测”列出数据集、基线、指标与实验设定；“关键结果”必须给出论文中可核验的数字，并标注页码、表号或图号。无法核验就明确写未知。
 8. “消融实验与误差分析”区分作者证据与自己的推断；“独立评价”给出贡献强度、证据强度、可复现性、对当前研究方向的价值和后续问题。
-9. 若关键图确实有助理解，从 PDF 原文提取 1–4 张框架图/结果图到 `{assets_dir}`，不要生成或重绘论文中不存在的图。图片必须裁到“图主体 + 原始 caption”，去掉页眉、页脚、大片空白和无关正文；不要把整页截图伪装成 figure。完成后检查图片尺寸和内容。在笔记中用相对路径 `![](assets/文件名.png)` 引用，并在图下注明原始图号/页码及解读。若没有合适的图，明确说明原因。
+9. 若关键图确实有助理解，从 PDF 原文提取 1–4 张框架图/结果图到 `{assets_dir}`，不要生成或重绘论文中不存在的图。图片必须裁到“图主体 + 原始 caption”，去掉页眉、页脚、大片空白和无关正文；不要把整页截图伪装成 figure。渲染整页和裁剪测试等中间文件只能放在 `{temporary_dir}`，`assets` 只放最终图。完成后检查图片尺寸和内容。在笔记中用相对路径 `![](assets/文件名.png)` 引用，并在图下注明原始图号/页码及解读。若没有合适的图，明确说明原因。
 10. 不要编造作者、实验数字、引用、代码仓库或结论。必要时直接写“论文未报告”或“当前材料无法确认”。
 
 完成前自行检查：文件存在、章节齐全、图链接有效、结论与论文证据一致。
@@ -465,7 +469,9 @@ class DeepReader:
             content = path.read_text(encoding="utf-8")
         except OSError:
             return False
-        return len(content) >= minimum_chars and all(section in content for section in REQUIRED_SECTIONS)
+        if len(content) < minimum_chars or not all(section in content for section in REQUIRED_SECTIONS):
+            return False
+        return _asset_links_valid(path, path.parent / "assets")
 
     @staticmethod
     def _item(
@@ -480,11 +486,7 @@ class DeepReader:
         assets_dir: Path,
         error: str = "",
     ) -> DeepReadItem:
-        assets = sorted(
-            str(path.resolve())
-            for path in assets_dir.glob("*")
-            if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
-        )
+        assets = [str(path) for path in _linked_assets(note_path, assets_dir)] if note_path else []
         return DeepReadItem(
             rank=rank,
             canonical_id=str(paper.get("canonical_id") or ""),
@@ -639,6 +641,47 @@ def extract_one_sentence(note_path: Path) -> str:
         if candidate and not candidate.startswith("!"):
             return candidate[:700]
     return "精读笔记见附件。"
+
+
+def _linked_assets(note_path: Path, assets_dir: Path) -> list[Path]:
+    try:
+        content = note_path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    root = assets_dir.resolve()
+    results: list[Path] = []
+    seen: set[Path] = set()
+    for match in re.finditer(r"!\[[^\]]*\]\(<?(assets/[^)>]+)>?\)", content):
+        candidate = (note_path.parent / match.group(1).strip()).resolve()
+        try:
+            candidate.relative_to(root)
+        except ValueError:
+            continue
+        if (
+            candidate not in seen
+            and candidate.is_file()
+            and candidate.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
+        ):
+            results.append(candidate)
+            seen.add(candidate)
+    return results
+
+
+def _asset_links_valid(note_path: Path, assets_dir: Path) -> bool:
+    try:
+        content = note_path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    root = assets_dir.resolve()
+    for match in re.finditer(r"!\[[^\]]*\]\(<?(assets/[^)>]+)>?\)", content):
+        candidate = (note_path.parent / match.group(1).strip()).resolve()
+        try:
+            candidate.relative_to(root)
+        except ValueError:
+            return False
+        if not candidate.is_file():
+            return False
+    return True
 
 
 def _has_pdf_magic(path: Path) -> bool:

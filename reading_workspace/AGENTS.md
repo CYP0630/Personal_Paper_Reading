@@ -9,4 +9,5 @@ This directory is the working directory for unattended paper-reading tasks.
 - Distinguish reported evidence from your own interpretation. Never invent numbers, citations, authors, baselines, code links, or conclusions.
 - Use MathJax `$...$` and `$$...$$` for formulas.
 - Extract 1–4 useful figures from the source PDF when they materially help understanding. Crop each image to the figure plus its original caption; exclude headers, footers, large margins, and unrelated body text. Do not save a full PDF page as a figure and do not generate replacement figures. Keep assets under the requested `assets/` directory and use standard relative Markdown image links.
+- Keep rendered pages, text extraction, and crop experiments in the requested `tmp/` directory. Only final figures referenced by the note belong in `assets/`.
 - If only an abstract or partial web page is available, label the note as a limited-evidence reading rather than a full-paper deep read.
