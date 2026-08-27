@@ -46,7 +46,7 @@ systemctl --user enable --now paper-radar.timer paper-radar-deep-read.timer
 echo "Installed paper-radar in $repo_dir"
 echo "Secret environment file: $config_dir/env"
 echo "Output directory: $output_dir"
-if ! command -v codex >/dev/null 2>&1; then
+if [[ ! -x "$HOME/.local/bin/codex" ]] && ! command -v codex >/dev/null 2>&1; then
   echo "WARNING: codex CLI is not on PATH; daily deep reading will fail until it is installed" >&2
 fi
 systemctl --user list-timers paper-radar.timer paper-radar-deep-read.timer --no-pager

@@ -105,6 +105,17 @@ def paper_storage_key(paper: dict[str, Any]) -> str:
     return value[:96] or "paper-unknown"
 
 
+def local_pdf_canonical_id(path: Path) -> str:
+    source = path.expanduser().resolve()
+    if not source.is_file() or source.stat().st_size > MAX_DOWNLOAD_BYTES or not _has_pdf_magic(source):
+        raise DeepReadError(f"Local file is not a valid PDF under 100 MiB: {source}")
+    digest = hashlib.sha256()
+    with source.open("rb") as stream:
+        while chunk := stream.read(1024 * 1024):
+            digest.update(chunk)
+    return f"file:{digest.hexdigest()[:20]}"
+
+
 def paper_from_url(
     url: str,
     *,
@@ -192,7 +203,7 @@ class DeepReader:
             source = local_pdf.expanduser().resolve()
             if not source.is_file():
                 raise DeepReadError(f"Local PDF does not exist: {source}")
-            if source.stat().st_size > MAX_DOWNLOAD_BYTES or source.read_bytes()[:4] != b"%PDF":
+            if source.stat().st_size > MAX_DOWNLOAD_BYTES or not _has_pdf_magic(source):
                 raise DeepReadError(f"Local file is not a valid PDF under 100 MiB: {source}")
             temporary = pdf_path.with_suffix(".pdf.tmp")
             shutil.copy2(source, temporary)
@@ -366,7 +377,7 @@ class DeepReader:
 """
 
     def _ensure_pdf(self, paper: dict[str, Any], destination: Path) -> Path:
-        if destination.exists() and destination.stat().st_size > 4 and destination.read_bytes()[:4] == b"%PDF":
+        if destination.exists() and destination.stat().st_size > 4 and _has_pdf_magic(destination):
             return destination
         errors: list[str] = []
         for url in self._pdf_candidates(paper):
@@ -413,7 +424,11 @@ class DeepReader:
             if parsed.path.lower().endswith(".pdf"):
                 candidates.append(url)
             if "nature.com" in parsed.netloc.lower() and "/articles/" in parsed.path:
-                candidates.append(urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, parsed.path.rstrip("/") + ".pdf", "", "")))
+                candidates.append(
+                    urllib.parse.urlunsplit(
+                        (parsed.scheme, parsed.netloc, parsed.path.rstrip("/") + ".pdf", "", "")
+                    )
+                )
         return list(dict.fromkeys(candidates))
 
     @staticmethod
@@ -624,3 +639,11 @@ def extract_one_sentence(note_path: Path) -> str:
         if candidate and not candidate.startswith("!"):
             return candidate[:700]
     return "精读笔记见附件。"
+
+
+def _has_pdf_magic(path: Path) -> bool:
+    try:
+        with path.open("rb") as stream:
+            return stream.read(4) == b"%PDF"
+    except OSError:
+        return False

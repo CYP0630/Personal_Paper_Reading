@@ -16,6 +16,7 @@ from paper_radar.reading import (
     DeepReadRun,
     DeepReader,
     extract_one_sentence,
+    local_pdf_canonical_id,
     paper_from_url,
     paper_storage_key,
     render_reading_index,
@@ -248,6 +249,18 @@ class CoreTests(unittest.TestCase):
             candidates,
             ["https://www.nature.com/articles/s41591-026-04431-5.pdf"],
         )
+
+    def test_local_pdf_identity_uses_content_not_filename(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            first_dir = Path(temporary) / "one"
+            second_dir = Path(temporary) / "two"
+            first_dir.mkdir()
+            second_dir.mkdir()
+            first = first_dir / "paper.pdf"
+            second = second_dir / "paper.pdf"
+            first.write_bytes(b"%PDF-first")
+            second.write_bytes(b"%PDF-second")
+            self.assertNotEqual(local_pdf_canonical_id(first), local_pdf_canonical_id(second))
 
     def test_reading_index_and_one_sentence(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -12,6 +12,7 @@ from paper_radar.pipeline import SOURCE_FACTORIES, discover
 from paper_radar.reading import (
     DeepReadError,
     DeepReader,
+    local_pdf_canonical_id,
     paper_from_url,
     publish_deep_read_item,
     publish_deep_read_run,
@@ -182,7 +183,7 @@ def run_read(args: argparse.Namespace) -> int:
         )
     else:
         local_pdf = Path(args.pdf).expanduser().resolve()
-        identifier = args.canonical_id or f"file:{local_pdf.stem}"
+        identifier = args.canonical_id or local_pdf_canonical_id(local_pdf)
         paper = {
             "canonical_id": identifier,
             "title": args.title or local_pdf.stem,
