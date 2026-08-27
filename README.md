@@ -67,6 +67,9 @@ See `.env.example` for all optional environment variables.
 # All enabled sources, four-day lookback, Top 8
 paper-radar discover
 
+# Generate and publish a compact digest through Hermes/Discord
+paper-radar discover --publish
+
 # A fast source-specific smoke test
 paper-radar discover --source hf --digest-size 3 --no-write
 
@@ -81,6 +84,15 @@ Each normal run writes:
 
 A failed source does not abort other sources. The CLI and Markdown digest both
 report per-source counts and errors so partial results remain auditable.
+
+### Hermes and Discord delivery
+
+`delivery.hermes` in `config/topics.yaml` records the Discord server/channel
+and the `hermes send` target. Publishing is explicit: regular local discovery
+does not send a message, while the workstation systemd service includes
+`--publish`. Hermes reuses its existing Discord credentials and automatically
+chunks the compact Markdown digest to Discord's message limit; Paper Radar does
+not copy or read the bot token.
 
 ## Workstation deployment
 

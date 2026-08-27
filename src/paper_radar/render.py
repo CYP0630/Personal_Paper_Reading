@@ -67,9 +67,33 @@ def render_markdown(result: DiscoveryResult, *, target_date: str) -> str:
     return "\n".join(lines)
 
 
+def render_discord(result: DiscoveryResult, *, target_date: str) -> str:
+    """Render a compact Discord digest; Hermes handles platform chunking."""
+    lines = [
+        f"**{target_date} · Top {len(result.selected)}**",
+        f"抓取 {result.fetched_count} 条 · 去重 {result.unique_count} 条 · 达标 {result.eligible_count} 条",
+        "",
+    ]
+    for index, paper in enumerate(result.selected, start=1):
+        title = paper.title.replace("[", "\\[").replace("]", "\\]")
+        topics = " · ".join(paper.topics)
+        reason = "；".join(paper.reasons[:2]) if paper.reasons else "主题与种子相关"
+        lines.extend(
+            [
+                f"**{index}. [{title}]({paper.url})**",
+                f"`{topics}` · fit `{paper.scores.get('fit', 0):.2f}` · heat `{paper.scores.get('heat', 0):.2f}`",
+                f"{reason}",
+                "",
+            ]
+        )
+    if result.source_errors:
+        failed = ", ".join(sorted(result.source_errors))
+        lines.append(f"⚠️ 部分来源失败：{failed}")
+    return "\n".join(lines).strip() + "\n"
+
+
 def _atomic_write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(content, encoding="utf-8")
     temporary.replace(path)
-

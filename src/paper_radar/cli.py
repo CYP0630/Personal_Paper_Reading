@@ -7,8 +7,9 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from paper_radar.config import ResearchConfig
+from paper_radar.delivery import DeliveryError, publish_with_hermes
 from paper_radar.pipeline import SOURCE_FACTORIES, discover
-from paper_radar.render import write_outputs
+from paper_radar.render import render_discord, write_outputs
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -30,6 +31,15 @@ def build_parser() -> argparse.ArgumentParser:
     discover_parser.add_argument("--output-root", default=".")
     discover_parser.add_argument("--offline", action="store_true", help="Use cached responses only")
     discover_parser.add_argument("--no-write", action="store_true", help="Run without creating digest files")
+    discover_parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="Publish the compact digest through the configured Hermes target",
+    )
+    discover_parser.add_argument(
+        "--publish-target",
+        help="Override the configured Hermes target, for example discord:1234567890",
+    )
 
     validate_parser = subparsers.add_parser("validate-config", help="Validate topics and seed metadata")
     validate_parser.add_argument("--config", default="config/topics.yaml")
@@ -42,12 +52,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "validate-config":
             return validate_config(args.config)
         return run_discover(args)
-    except (OSError, ValueError) as exc:
+    except (DeliveryError, OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
 
 def run_discover(args: argparse.Namespace) -> int:
+    if args.publish and args.no_write:
+        raise ValueError("--publish cannot be combined with --no-write")
     config = ResearchConfig.load(args.config)
     timezone = ZoneInfo(config.raw.get("profile", {}).get("timezone", "UTC"))
     now = datetime.now(timezone)
@@ -82,6 +94,13 @@ def run_discover(args: argparse.Namespace) -> int:
         )
         print(f"json: {json_path}")
         print(f"digest: {markdown_path}")
+    if args.publish:
+        delivery = publish_with_hermes(
+            config,
+            render_discord(result, target_date=target.isoformat()),
+            target_override=args.publish_target,
+        )
+        print(f"published: {delivery.provider} -> {delivery.target}")
     return 0 if result.selected or not result.source_errors else 2
 
 
@@ -104,6 +123,15 @@ def validate_config(path: str) -> int:
     unknown_enabled = config.enabled_sources - set(SOURCE_FACTORIES)
     if unknown_enabled:
         raise ValueError(f"Enabled sources do not have adapters: {sorted(unknown_enabled)}")
+    hermes = config.raw.get("delivery", {}).get("hermes", {})
+    if hermes.get("enabled", False):
+        server_id = str(hermes.get("server_id", ""))
+        channel_id = str(hermes.get("channel_id", ""))
+        target = str(hermes.get("target", ""))
+        if not server_id.isdigit() or not channel_id.isdigit():
+            raise ValueError("Hermes Discord server_id and channel_id must be numeric strings")
+        if target != f"discord:{channel_id}":
+            raise ValueError("Hermes target must match delivery.hermes.channel_id")
     print(
         f"ok: {len(config.topics)} topics, {len(identifiers)} unique seeds, "
         f"sources={','.join(sorted(config.enabled_sources))}"

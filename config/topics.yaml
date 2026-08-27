@@ -157,6 +157,16 @@ query_defaults:
     - withdrawn
     - retracted
 
+delivery:
+  hermes:
+    enabled: true
+    executable: hermes
+    platform: discord
+    server_id: "1526970527149854740"
+    channel_id: "1542379320289263676"
+    target: "discord:1542379320289263676"
+    subject: "📚 Daily Paper Radar"
+
 topics:
   methods:
     - id: agentic_systems

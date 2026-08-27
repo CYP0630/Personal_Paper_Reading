@@ -4,9 +4,11 @@ import tempfile
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from paper_radar.config import ResearchConfig
 from paper_radar.dedupe import deduplicate
+from paper_radar.delivery import DeliveryError, publish_with_hermes
 from paper_radar.http import HttpClient
 from paper_radar.models import Paper
 from paper_radar.scoring import score_papers, select_digest
@@ -16,6 +18,7 @@ from paper_radar.sources.huggingface import HuggingFaceSource
 from paper_radar.sources.nature import NatureSource
 from paper_radar.sources.openreview import OpenReviewSource
 from paper_radar.sources.pubmed import PubMedSource
+from paper_radar.render import render_discord
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -158,6 +161,49 @@ class CoreTests(unittest.TestCase):
         papers = PubMedSource().parse(xml, self.context())
         self.assertEqual(papers[0].canonical_id, "doi:10.1038/example")
         self.assertIn("BACKGROUND", papers[0].abstract)
+
+    @patch("paper_radar.delivery.shutil.which", return_value="/usr/bin/hermes")
+    @patch("paper_radar.delivery.subprocess.run")
+    def test_hermes_delivery(self, run, _which) -> None:
+        run.return_value.returncode = 0
+        run.return_value.stdout = ""
+        run.return_value.stderr = ""
+        result = publish_with_hermes(self.config, "Daily digest")
+        self.assertEqual(result.target, "discord:1542379320289263676")
+        command = run.call_args.args[0]
+        self.assertEqual(command[:4], ["/usr/bin/hermes", "send", "--to", result.target])
+        self.assertEqual(run.call_args.kwargs["input"], "Daily digest")
+
+    @patch("paper_radar.delivery.shutil.which", return_value=None)
+    def test_hermes_delivery_requires_executable(self, _which) -> None:
+        with self.assertRaises(DeliveryError):
+            publish_with_hermes(self.config, "Daily digest")
+
+    def test_discord_render_is_compact(self) -> None:
+        paper = Paper(
+            canonical_id="arxiv:2608.00100",
+            title="Agentic Paper",
+            source="arxiv",
+            url="https://arxiv.org/abs/2608.00100",
+            topics=["agentic_systems"],
+            scores={"fit": 0.9, "heat": 0.7},
+            reasons=["匹配 agentic_systems"],
+        )
+        from paper_radar.pipeline import DiscoveryResult
+
+        result = DiscoveryResult(
+            generated_at="2026-08-26T00:00:00Z",
+            window_start="2026-08-22T00:00:00Z",
+            window_end="2026-08-26T00:00:00Z",
+            fetched_count=1,
+            unique_count=1,
+            eligible_count=1,
+            selected=[paper],
+        )
+        message = render_discord(result, target_date="2026-08-26")
+        self.assertIn("Top 1", message)
+        self.assertIn("Agentic Paper", message)
+        self.assertNotIn("abstract", message.lower())
 
 
 if __name__ == "__main__":
