@@ -1,0 +1,11 @@
+[Unit]
+Description=Deep-read the daily Personal Paper Radar Top 8
+
+[Timer]
+OnCalendar=*-*-* 08:00:00 America/New_York
+Persistent=true
+RandomizedDelaySec=5m
+Unit=paper-radar-deep-read.service
+
+[Install]
+WantedBy=timers.target

@@ -9,6 +9,13 @@ from zoneinfo import ZoneInfo
 from paper_radar.config import ResearchConfig
 from paper_radar.delivery import DeliveryError, publish_with_hermes
 from paper_radar.pipeline import SOURCE_FACTORIES, discover
+from paper_radar.reading import (
+    DeepReadError,
+    DeepReader,
+    paper_from_url,
+    publish_deep_read_item,
+    publish_deep_read_run,
+)
 from paper_radar.render import render_discord, write_outputs
 
 
@@ -43,7 +50,33 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate_parser = subparsers.add_parser("validate-config", help="Validate topics and seed metadata")
     validate_parser.add_argument("--config", default="config/topics.yaml")
+
+    deep_parser = subparsers.add_parser("deep-read", help="Deep-read a daily Top-N inbox with Codex")
+    _add_reading_arguments(deep_parser)
+    deep_parser.add_argument("--date", help="Inbox date in YYYY-MM-DD; defaults to today")
+    deep_parser.add_argument("--input-root", default=".")
+    deep_parser.add_argument("--max-papers", type=int)
+
+    read_parser = subparsers.add_parser("read", help="Deep-read one paper URL or local PDF")
+    _add_reading_arguments(read_parser)
+    source_group = read_parser.add_mutually_exclusive_group(required=True)
+    source_group.add_argument("--url", help="Paper page, arXiv, or direct PDF URL")
+    source_group.add_argument("--pdf", help="Local PDF path, including a Hermes attachment path")
+    read_parser.add_argument("--title", default="")
+    read_parser.add_argument("--canonical-id", default="")
+    read_parser.add_argument("--pdf-url", default="")
+    read_parser.add_argument("--topic", action="append", default=[])
     return parser
+
+
+def _add_reading_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--config", default="config/topics.yaml")
+    parser.add_argument("--output-root", default=".")
+    parser.add_argument("--workdir", default="reading_workspace")
+    parser.add_argument("--codex", default="codex")
+    parser.add_argument("--force", action="store_true")
+    parser.add_argument("--publish", action="store_true")
+    parser.add_argument("--publish-target")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -51,8 +84,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "validate-config":
             return validate_config(args.config)
-        return run_discover(args)
-    except (DeliveryError, OSError, ValueError) as exc:
+        if args.command == "discover":
+            return run_discover(args)
+        if args.command == "deep-read":
+            return run_deep_read(args)
+        return run_read(args)
+    except (DeepReadError, DeliveryError, OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
@@ -102,6 +139,74 @@ def run_discover(args: argparse.Namespace) -> int:
         )
         print(f"published: {delivery.provider} -> {delivery.target}")
     return 0 if result.selected or not result.source_errors else 2
+
+
+def run_deep_read(args: argparse.Namespace) -> int:
+    config = ResearchConfig.load(args.config)
+    timezone = ZoneInfo(config.raw.get("profile", {}).get("timezone", "UTC"))
+    target = date.fromisoformat(args.date) if args.date else datetime.now(timezone).date()
+    settings = config.deep_read_settings()
+    limit = args.max_papers or int(settings.get("max_papers", config.daily_settings()["digest_size"]))
+    if limit < 1:
+        raise ValueError("--max-papers must be positive")
+    input_path = Path(args.input_root).expanduser().resolve() / "data" / "inbox" / f"{target.isoformat()}.json"
+    runner = DeepReader(
+        config,
+        output_root=Path(args.output_root),
+        workdir=Path(args.workdir),
+        codex_executable=args.codex,
+        force=args.force,
+    )
+    run = runner.run_daily(input_path=input_path, target_date=target.isoformat(), limit=limit)
+    print(f"deep_read requested={len(run.items)} successful={run.successful_count} failed={run.failed_count}")
+    for item in run.items:
+        print(f"paper {item.rank}: {item.status} {item.paper_key} {item.note_path or item.error}")
+    print(f"index: {run.index_path}")
+    print(f"manifest: {run.manifest_path}")
+    if args.publish:
+        deliveries = publish_deep_read_run(config, run, target_override=args.publish_target)
+        print(f"published: {len(deliveries)} Hermes messages")
+    return 0 if run.items and run.failed_count == 0 else 2
+
+
+def run_read(args: argparse.Namespace) -> int:
+    config = ResearchConfig.load(args.config)
+    local_pdf: Path | None = None
+    if args.url:
+        paper = paper_from_url(
+            args.url,
+            title=args.title,
+            canonical_id=args.canonical_id,
+            pdf_url=args.pdf_url,
+            topics=args.topic,
+        )
+    else:
+        local_pdf = Path(args.pdf).expanduser().resolve()
+        identifier = args.canonical_id or f"file:{local_pdf.stem}"
+        paper = {
+            "canonical_id": identifier,
+            "title": args.title or local_pdf.stem,
+            "url": "",
+            "pdf_url": None,
+            "abstract": "",
+            "authors": [],
+            "topics": args.topic,
+            "source_ids": {},
+            "metadata": {"manual_submission": True, "original_filename": local_pdf.name},
+        }
+    runner = DeepReader(
+        config,
+        output_root=Path(args.output_root),
+        workdir=Path(args.workdir),
+        codex_executable=args.codex,
+        force=args.force,
+    )
+    item = runner.read_one(paper, local_pdf=local_pdf)
+    print(f"paper: {item.status} {item.paper_key} {item.note_path or item.error}")
+    if args.publish:
+        delivery = publish_deep_read_item(config, item, target_override=args.publish_target)
+        print(f"published: {delivery.provider} -> {delivery.target}")
+    return 0 if item.successful else 2
 
 
 def validate_config(path: str) -> int:

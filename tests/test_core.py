@@ -11,6 +11,15 @@ from paper_radar.dedupe import deduplicate
 from paper_radar.delivery import DeliveryError, publish_with_hermes
 from paper_radar.http import HttpClient
 from paper_radar.models import Paper
+from paper_radar.reading import (
+    DeepReadItem,
+    DeepReadRun,
+    DeepReader,
+    extract_one_sentence,
+    paper_from_url,
+    paper_storage_key,
+    render_reading_index,
+)
 from paper_radar.scoring import score_papers, select_digest
 from paper_radar.sources.arxiv import ArxivSource
 from paper_radar.sources.base import FetchContext
@@ -179,6 +188,20 @@ class CoreTests(unittest.TestCase):
         with self.assertRaises(DeliveryError):
             publish_with_hermes(self.config, "Daily digest")
 
+    @patch("paper_radar.delivery.shutil.which", return_value="/usr/bin/hermes")
+    @patch("paper_radar.delivery.subprocess.run")
+    def test_hermes_delivery_adds_attachments(self, run, _which) -> None:
+        run.return_value.returncode = 0
+        run.return_value.stdout = ""
+        run.return_value.stderr = ""
+        with tempfile.TemporaryDirectory() as temporary:
+            note = Path(temporary) / "note.md"
+            note.write_text("deep read", encoding="utf-8")
+            publish_with_hermes(self.config, "Ready", attachments=[note])
+            body = run.call_args.kwargs["input"]
+            self.assertIn("Ready", body)
+            self.assertIn(f"MEDIA:{note.resolve()}", body)
+
     def test_discord_render_is_compact(self) -> None:
         paper = Paper(
             canonical_id="arxiv:2608.00100",
@@ -204,6 +227,57 @@ class CoreTests(unittest.TestCase):
         self.assertIn("Top 1", message)
         self.assertIn("Agentic Paper", message)
         self.assertNotIn("abstract", message.lower())
+
+    def test_manual_arxiv_url_resolves_pdf_and_key(self) -> None:
+        paper = paper_from_url(
+            "https://arxiv.org/abs/2608.12345",
+            title="A Reliable Agent",
+            topics=["agentic_systems"],
+        )
+        self.assertEqual(paper["canonical_id"], "arxiv:2608.12345")
+        self.assertEqual(paper["pdf_url"], "https://arxiv.org/pdf/2608.12345")
+        self.assertEqual(paper_storage_key(paper), "arxiv-2608.12345")
+
+    def test_nature_pdf_candidate(self) -> None:
+        paper = {
+            "url": "https://www.nature.com/articles/s41591-026-04431-5?source=test",
+            "source_ids": {},
+        }
+        candidates = DeepReader._pdf_candidates(paper)
+        self.assertEqual(
+            candidates,
+            ["https://www.nature.com/articles/s41591-026-04431-5.pdf"],
+        )
+
+    def test_reading_index_and_one_sentence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            note = root / "library" / "papers" / "arxiv-1" / "deep-read.md"
+            note.parent.mkdir(parents=True)
+            note.write_text(
+                "---\ntitle: Test\n---\n\n## 一句话总结\n\n这是核心结论。\n\n## 研究问题\n\n问题。\n",
+                encoding="utf-8",
+            )
+            item = DeepReadItem(
+                rank=1,
+                canonical_id="arxiv:1",
+                title="Test Paper",
+                url="https://arxiv.org/abs/1",
+                paper_key="arxiv-1",
+                status="complete",
+                evidence="full_text_pdf",
+                note_path=str(note),
+            )
+            run = DeepReadRun(
+                target_date="2026-08-27",
+                generated_at="2026-08-27T08:00:00-04:00",
+                input_path=str(root / "data" / "inbox" / "2026-08-27.json"),
+                output_root=str(root),
+                items=[item],
+            )
+            index = render_reading_index(run)
+            self.assertIn("../../library/papers/arxiv-1/deep-read.md", index)
+            self.assertEqual(extract_one_sentence(note), "这是核心结论。")
 
 
 if __name__ == "__main__":

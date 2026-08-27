@@ -85,6 +85,46 @@ Each normal run writes:
 A failed source does not abort other sources. The CLI and Markdown digest both
 report per-source counts and errors so partial results remain auditable.
 
+## Top-8 deep reading
+
+Discovery and deep reading are separate, restartable phases. The discovery
+phase remains fast and auditable; the reading phase downloads each selected
+paper and delegates a full Chinese reading note to Codex CLI.
+
+```bash
+# Deep-read today's inbox (up to the configured Top 8)
+paper-radar deep-read \
+  --input-root "$HOME/.local/share/paper-radar" \
+  --output-root "$HOME/.local/share/paper-radar" \
+  --workdir "$HOME/Personal_Paper_Reading/reading_workspace"
+
+# Read one arXiv/publisher/PDF link and publish the result
+paper-radar read --url "https://arxiv.org/abs/2210.03629" \
+  --title "ReAct" --output-root "$HOME/.local/share/paper-radar" --publish
+
+# Read a PDF attachment already downloaded by Hermes
+paper-radar read --pdf "/absolute/path/to/paper.pdf" \
+  --title "Paper title" --output-root "$HOME/.local/share/paper-radar" --publish
+```
+
+The managed archive has two layers:
+
+- `library/papers/<canonical-id>/`: one canonical `source.pdf`, `metadata.json`,
+  `deep-read.md`, extracted `assets/`, status, and execution log per paper;
+- `readings/YYYY-MM-DD/`: a lightweight daily `index.md` and `manifest.json`
+  pointing into the canonical library.
+
+Normal reruns reuse a complete canonical note, so the same paper is not
+downloaded or analyzed twice. `--force` preserves the previous note as
+`deep-read.previous.md` before regeneration. A full note includes the research
+question, method and objectives, data/evaluation, verified numerical results,
+ablations/error analysis, limitations, and an independent assessment. Useful
+source figures are extracted rather than regenerated.
+
+When no full PDF is available (for example, a publisher paywall), the workflow
+may create a visibly labeled limited-evidence reading from the accessible page
+or abstract. It never presents that result as a full-paper deep read.
+
 ### Hermes and Discord delivery
 
 `delivery.hermes` in `config/topics.yaml` records the Discord server/channel
@@ -93,6 +133,13 @@ does not send a message, while the workstation systemd service includes
 `--publish`. Hermes reuses its existing Discord credentials and automatically
 chunks the compact Markdown digest to Discord's message limit; Paper Radar does
 not copy or read the bot token.
+
+The deep-reading publisher sends a daily index followed by one message per
+successful paper. Each message contains the one-sentence conclusion and the
+full Markdown note as a Discord attachment; the first extracted key figure is
+also attached when available. The installed Hermes `paper-reading` skill uses
+the same commands for URLs and Discord PDF attachments, so interactive and
+scheduled reading share one archive and quality contract.
 
 ## Workstation deployment
 
@@ -103,6 +150,20 @@ tree:
 - secret environment: `~/.config/paper-radar/env` (mode `0600`);
 - JSON and Markdown output: `~/.local/share/paper-radar`;
 - HTTP cache: `~/.cache/paper-radar`.
+
+The workstation also needs Codex CLI. The repository includes a checksum-
+verified, user-local Linux installer pinned to a known release:
+
+```bash
+bash ~/Personal_Paper_Reading/scripts/install_codex_cli.sh
+codex login --device-auth
+codex login status
+```
+
+`codex exec` is used non-interactively with an ephemeral session. The reading
+workspace grants broad filesystem access only because the canonical library is
+outside the Git repository; the generated prompt explicitly limits writes to
+the current paper directory and treats all paper content as untrusted data.
 
 On a Linux workstation with systemd user services:
 
@@ -123,6 +184,9 @@ systemctl --user start paper-radar.service
 
 The timer runs daily at 07:30 in `America/New_York`, catches up after downtime,
 and applies a delay of up to ten minutes to avoid synchronized API traffic.
+The separate deep-reading timer starts at 08:00 with up to five minutes of
+jitter and allows up to eight hours for the Top 8. This separation keeps a
+single failed paper from losing the discovery digest.
 The installer prefers a virtual environment and falls back to the system Python
 when `python3-venv` is unavailable and PyYAML is already installed.
 
@@ -131,5 +195,8 @@ Useful checks:
 ```bash
 systemctl --user status paper-radar.timer
 systemctl --user status paper-radar.service
+systemctl --user status paper-radar-deep-read.timer
+systemctl --user status paper-radar-deep-read.service
 journalctl --user -u paper-radar.service -n 100 --no-pager
+journalctl --user -u paper-radar-deep-read.service -n 100 --no-pager
 ```

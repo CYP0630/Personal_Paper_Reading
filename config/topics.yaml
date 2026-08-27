@@ -167,6 +167,18 @@ delivery:
     target: "discord:1542379320289263676"
     subject: "📚 Daily Paper Radar"
 
+deep_read:
+  # Canonical notes and PDFs are stored once under library/papers; each day
+  # gets a lightweight readings/YYYY-MM-DD index and manifest.
+  enabled: true
+  provider: codex_cli
+  max_papers: 8
+  timeout_seconds_per_paper: 2700
+  minimum_note_chars: 1800
+  codex_sandbox: danger-full-access
+  codex_model: gpt-5.6-terra
+  codex_reasoning_effort: high
+
 topics:
   methods:
     - id: agentic_systems

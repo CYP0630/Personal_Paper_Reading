@@ -56,3 +56,5 @@ class ResearchConfig:
     def selection_settings(self) -> dict[str, Any]:
         return self.raw["retrieval_policy"]["selection"]
 
+    def deep_read_settings(self) -> dict[str, Any]:
+        return self.raw.get("deep_read", {})

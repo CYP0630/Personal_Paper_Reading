@@ -27,6 +27,7 @@ fi
 
 install -d -m 700 "$config_dir"
 install -d -m 755 "$user_unit_dir" "$output_dir" "$cache_dir"
+install -d -m 755 "$output_dir/library/papers" "$output_dir/readings"
 if [[ ! -e "$config_dir/env" ]]; then
   install -m 600 /dev/null "$config_dir/env"
 else
@@ -34,11 +35,18 @@ else
 fi
 install -m 644 "$repo_dir/deploy/systemd/paper-radar.service" "$user_unit_dir/paper-radar.service"
 install -m 644 "$repo_dir/deploy/systemd/paper-radar.timer" "$user_unit_dir/paper-radar.timer"
+install -m 644 "$repo_dir/deploy/systemd/paper-radar-deep-read.service" "$user_unit_dir/paper-radar-deep-read.service"
+install -m 644 "$repo_dir/deploy/systemd/paper-radar-deep-read.timer" "$user_unit_dir/paper-radar-deep-read.timer"
+install -d -m 755 "$HOME/.hermes/skills/research/paper-reading"
+install -m 644 "$repo_dir/deploy/hermes/skills/paper-reading/SKILL.md" "$HOME/.hermes/skills/research/paper-reading/SKILL.md"
 
 systemctl --user daemon-reload
-systemctl --user enable --now paper-radar.timer
+systemctl --user enable --now paper-radar.timer paper-radar-deep-read.timer
 
 echo "Installed paper-radar in $repo_dir"
 echo "Secret environment file: $config_dir/env"
 echo "Output directory: $output_dir"
-systemctl --user list-timers paper-radar.timer --no-pager
+if ! command -v codex >/dev/null 2>&1; then
+  echo "WARNING: codex CLI is not on PATH; daily deep reading will fail until it is installed" >&2
+fi
+systemctl --user list-timers paper-radar.timer paper-radar-deep-read.timer --no-pager
