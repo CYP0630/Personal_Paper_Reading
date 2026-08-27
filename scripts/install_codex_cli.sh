@@ -30,5 +30,8 @@ tar -xzf "$codex_asset"
 
 install -d -m 755 "$HOME/.local/bin"
 install -m 755 ./bin/codex "$HOME/.local/bin/codex"
+if [[ -x ./bin/codex-code-mode-host ]]; then
+  install -m 755 ./bin/codex-code-mode-host "$HOME/.local/bin/codex-code-mode-host"
+fi
 "$HOME/.local/bin/codex" --version
 echo "Codex CLI installed. Authenticate with: codex login --device-auth"
