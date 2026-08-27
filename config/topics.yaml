@@ -1,0 +1,1080 @@
+schema_version: 1
+
+profile:
+  id: personal_ai_research
+  name: Personal AI Research Radar
+  description: >-
+    A multi-label research profile centered on agentic systems, post-training,
+    multimodal intelligence, and agentic applications in finance and medicine.
+  timezone: America/New_York
+
+retrieval_policy:
+  # Keep the daily reading load bounded even when the candidate pool is large.
+  daily:
+    lookback_days: 4
+    candidate_pool_size: 300
+    digest_size: 8
+  weekly:
+    lookback_days: 10
+    digest_size: 20
+
+  # These lanes are evaluated independently before candidates are deduplicated.
+  discovery_mix:
+    core_fit: 0.65
+    cross_topic: 0.20
+    frontier_watch: 0.15
+
+  scoring:
+    # Fit and heat remain separate in reports so popularity cannot hide relevance.
+    fit:
+      semantic_similarity: 0.40
+      keyword_and_topic_match: 0.25
+      positive_seed_similarity: 0.20
+      project_relevance: 0.15
+    heat:
+      source_consensus: 0.30
+      age_normalized_attention: 0.30
+      citation_velocity: 0.20
+      code_or_model_velocity: 0.20
+    confidence:
+      metadata_completeness: 0.25
+      full_text_availability: 0.25
+      evidence_quality: 0.30
+      reproducibility_signals: 0.20
+
+  selection:
+    minimum_fit: 0.55
+    preferred_fit: 0.72
+    maximum_per_primary_topic: 3
+    minimum_cross_topic_items: 1
+    minimum_frontier_items: 1
+
+  deduplication:
+    identifier_order:
+      - doi
+      - arxiv_id
+      - semantic_scholar_id
+      - openalex_id
+      - normalized_title
+    normalized_title_similarity_threshold: 0.94
+
+  required_metadata:
+    - title
+    - abstract
+    - published_at
+    - primary_url
+
+source_groups:
+  scholarly_search:
+    - id: arxiv
+      enabled: true
+      weight: 1.00
+    - id: openreview
+      enabled: true
+      weight: 1.00
+    - id: openalex
+      enabled: false
+      planned: v2
+      weight: 0.90
+    - id: semantic_scholar
+      enabled: false
+      planned: v2
+      weight: 0.95
+  trend_detection:
+    - id: huggingface_papers
+      enabled: true
+      weight: 0.85
+    - id: github
+      enabled: false
+      planned: v2
+      weight: 0.70
+  domain_sources:
+    - id: pubmed
+      enabled: true
+      topics:
+        - agentic_medicine
+    - id: ncbi_pmc
+      enabled: false
+      planned: v2
+      topics:
+        - agentic_medicine
+  journal_watch:
+    # High-priority direct monitoring for medical AI. Retrieval should happen
+    # before general scholarly search, followed by the agentic_medicine filter.
+    - id: nature
+      name: Nature
+      enabled: true
+      priority: high
+      articles_url: https://www.nature.com/nature/articles
+      feed_url: https://www.nature.com/nature.rss
+      topics:
+        - agentic_medicine
+      score_boost: 0.18
+    - id: nature_medicine
+      name: Nature Medicine
+      enabled: true
+      priority: critical
+      articles_url: https://www.nature.com/nm/articles
+      feeds_url: https://www.nature.com/nm/web-feeds
+      feed_url: https://www.nature.com/nm.rss
+      topics:
+        - agentic_medicine
+      score_boost: 0.25
+    - id: nature_machine_intelligence
+      name: Nature Machine Intelligence
+      enabled: true
+      priority: high
+      articles_url: https://www.nature.com/natmachintell/articles
+      feed_url: https://www.nature.com/natmachintell.rss
+      topics:
+        - agentic_medicine
+      score_boost: 0.20
+
+query_defaults:
+  # Broad terms must co-occur with at least one AI-context term when a topic
+  # declares require_ai_context: true.
+  ai_context_terms:
+    - foundation model
+    - large language model
+    - language model
+    - LLM
+    - multimodal large language model
+    - MLLM
+    - vision-language model
+    - VLM
+    - reinforcement learning
+    - generative AI
+    - neural model
+    - agentic AI
+  languages:
+    - en
+  publication_types:
+    - preprint
+    - conference
+    - journal
+    - technical_report
+  global_exclude_terms:
+    - withdrawn
+    - retracted
+
+topics:
+  methods:
+    - id: agentic_systems
+      name: Agentic Systems & Interactive Intelligence
+      short_name: Agents
+      enabled: true
+      priority: core
+      base_weight: 1.00
+      require_ai_context: true
+      arxiv_categories:
+        - cs.AI
+        - cs.CL
+        - cs.LG
+        - cs.MA
+        - cs.HC
+        - cs.SE
+        - cs.RO
+      preferred_venues:
+        - ICLR
+        - ICML
+        - NeurIPS
+        - ACL
+        - EMNLP
+        - NAACL
+        - AAAI
+        - AAMAS
+      include_terms:
+        - agentic AI
+        - LLM agent
+        - language model agent
+        - foundation model agent
+        - tool-using agent
+        - tool use
+        - function calling
+        - Model Context Protocol
+        - MCP agent
+        - computer-use agent
+        - computer use
+        - GUI agent
+        - browser agent
+        - web agent
+        - search agent
+        - agentic search
+        - deep research agent
+        - code agent
+        - data agent
+        - scientific agent
+        - agentic RAG
+        - long-horizon agent
+        - agent memory
+        - memory-augmented agent
+        - multi-agent LLM
+        - multi-agent collaboration
+        - agent swarm
+        - agent delegation
+        - self-improving agent
+        - self-evolving agent
+        - lifelong agent
+        - embodied agent
+        - vision-language-action
+        - VLA model
+        - agent benchmark
+        - agent evaluation
+        - human-agent interaction
+      exclude_terms:
+        - real estate agent
+        - travel agent
+        - sports agent
+        - user agent string
+        - chemical agent
+      subtopics:
+        - planning_and_reasoning
+        - tool_use_and_mcp
+        - search_and_deep_research
+        - gui_and_computer_use
+        - memory_and_context
+        - multi_agent_and_delegation
+        - self_improving_and_lifelong
+        - embodied_and_world_interaction
+        - human_agent_interaction
+        - evaluation_reliability_and_security
+      seeds:
+        positive:
+          - canonical_id: web:lilianweng-llm-powered-autonomous-agents
+            title: LLM Powered Autonomous Agents
+            resource_type: blog
+            tier: core
+            origin: user
+            url: https://lilianweng.github.io/posts/2023-06-23-agent/
+            tags: [planning, memory, tool_use, overview]
+            rationale: A durable conceptual map of planning, memory, and tool use in LLM agents.
+          - canonical_id: arxiv:2210.03629
+            title: "ReAct: Synergizing Reasoning and Acting in Language Models"
+            resource_type: paper
+            tier: core
+            origin: user
+            url: https://arxiv.org/abs/2210.03629
+            tags: [reasoning, acting, tool_use]
+            rationale: Establishes the interleaving of reasoning traces and environment actions.
+          - canonical_id: arxiv:2303.11366
+            title: "Reflexion: Language Agents with Verbal Reinforcement Learning"
+            resource_type: paper
+            tier: core
+            origin: user
+            url: https://arxiv.org/abs/2303.11366
+            tags: [reflection, verbal_feedback, memory, self_improvement]
+            rationale: A foundational pattern for learning from verbal feedback without weight updates.
+          - canonical_id: arxiv:2405.15793
+            title: "SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering"
+            resource_type: paper
+            tier: core
+            origin: user
+            url: https://arxiv.org/abs/2405.15793
+            tags: [code_agent, agent_computer_interface, software_engineering]
+            rationale: Demonstrates how the agent-computer interface shapes real task performance.
+          - canonical_id: arxiv:2304.03442
+            title: "Generative Agents: Interactive Simulacra of Human Behavior"
+            resource_type: paper
+            tier: core
+            origin: user
+            url: https://arxiv.org/abs/2304.03442
+            tags: [memory, reflection, planning, social_simulation]
+            rationale: Introduces memory-stream retrieval, reflection, and planning for believable agents.
+          - canonical_id: arxiv:2607.15524
+            title: Recursive Harness Self-Improvement
+            resource_type: paper
+            tier: recent
+            origin: user
+            url: https://arxiv.org/abs/2607.15524
+            tags: [self_improvement, harness, recursive_agents]
+            rationale: Tracks the frontier of agents improving their own execution harnesses.
+          - canonical_id: arxiv:2605.27366
+            title: "MUSE-Autoskill: Self-Evolving Agents via Skill Creation, Memory, Management, and Evaluation"
+            resource_type: paper
+            tier: recent
+            origin: user
+            url: https://arxiv.org/abs/2605.27366
+            tags: [skills, memory, self_evolution, evaluation]
+            rationale: Connects skill creation and lifecycle management with agent self-evolution.
+          - canonical_id: arxiv:2302.04761
+            title: "Toolformer: Language Models Can Teach Themselves to Use Tools"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2302.04761
+            tags: [tool_use, self_supervision, api_calling]
+            rationale: Provides a foundational self-supervised approach to learning when and how to call tools.
+          - canonical_id: arxiv:2305.16291
+            title: "Voyager: An Open-Ended Embodied Agent with Large Language Models"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2305.16291
+            tags: [embodied_agent, lifelong_learning, skill_library]
+            rationale: A representative lifelong agent that compounds reusable executable skills.
+          - canonical_id: arxiv:2310.08560
+            title: "MemGPT: Towards LLMs as Operating Systems"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2310.08560
+            tags: [memory, context_management, operating_system]
+            rationale: A key architecture for hierarchical memory and context management in agents.
+        negative: []
+
+    - id: post_training
+      name: Post-Training, Alignment & Adaptive Intelligence
+      short_name: Post-Training
+      enabled: true
+      priority: core
+      base_weight: 0.95
+      require_ai_context: true
+      arxiv_categories:
+        - cs.LG
+        - cs.CL
+        - cs.AI
+        - stat.ML
+      preferred_venues:
+        - ICLR
+        - ICML
+        - NeurIPS
+        - ACL
+        - EMNLP
+        - AAAI
+      include_terms:
+        - post-training
+        - post training
+        - instruction tuning
+        - supervised fine-tuning
+        - SFT
+        - reinforcement fine-tuning
+        - RFT
+        - reinforcement learning with verifiable rewards
+        - RLVR
+        - verifier-based reinforcement learning
+        - verifiable reward
+        - RLHF
+        - RLAIF
+        - proximal policy optimization
+        - PPO
+        - GRPO
+        - DAPO
+        - GSPO
+        - low-rank adaptation
+        - LoRA
+        - parameter-efficient fine-tuning
+        - PEFT
+        - preference optimization
+        - direct preference optimization
+        - DPO
+        - reward model
+        - generative reward model
+        - process reward model
+        - outcome reward model
+        - credit assignment
+        - reward shaping
+        - policy optimization
+        - on-policy distillation
+        - synthetic data
+        - self-play
+        - self-evolving data
+        - on-policy data
+        - data mixture
+        - chain-of-thought training
+        - reasoning model training
+        - continual adaptation
+        - lifelong learning
+        - test-time training
+        - inference-time scaling
+        - test-time search
+        - reward hacking
+        - training collapse
+      exclude_terms:
+        - post-training quantization
+        - PTQ
+      subtopics:
+        - instruction_tuning_and_sft
+        - preference_learning
+        - reward_modeling
+        - rlvr_and_verifiers
+        - agent_post_training
+        - multimodal_post_training
+        - synthetic_and_self_evolving_data
+        - distillation_and_on_policy_learning
+        - credit_assignment_and_long_horizon_rl
+        - continual_and_test_time_adaptation
+        - stability_generalization_and_reward_hacking
+      seeds:
+        positive:
+          - canonical_id: arxiv:2203.02155
+            title: Training Language Models to Follow Instructions with Human Feedback
+            resource_type: paper
+            tier: core
+            origin: user_keyword
+            url: https://arxiv.org/abs/2203.02155
+            tags: [RLHF, instruction_tuning, reward_model, PPO]
+            rationale: The canonical instruction-following RLHF pipeline spanning demonstrations, preference modeling, and RL.
+          - canonical_id: arxiv:2106.09685
+            title: "LoRA: Low-Rank Adaptation of Large Language Models"
+            resource_type: paper
+            tier: core
+            origin: user_keyword
+            url: https://arxiv.org/abs/2106.09685
+            tags: [LoRA, PEFT, adaptation]
+            rationale: A foundational parameter-efficient adaptation method used throughout modern post-training.
+          - canonical_id: arxiv:1707.06347
+            title: Proximal Policy Optimization Algorithms
+            resource_type: paper
+            tier: core
+            origin: user_keyword
+            url: https://arxiv.org/abs/1707.06347
+            tags: [PPO, reinforcement_learning, policy_optimization]
+            rationale: The policy-optimization baseline underlying many RLHF systems.
+          - canonical_id: arxiv:2305.18290
+            title: "Direct Preference Optimization: Your Language Model is Secretly a Reward Model"
+            resource_type: paper
+            tier: core
+            origin: user_keyword
+            url: https://arxiv.org/abs/2305.18290
+            tags: [DPO, preference_optimization, alignment]
+            rationale: Establishes direct preference learning without an explicit reward-model-and-RL loop.
+          - canonical_id: arxiv:2402.03300
+            title: "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2402.03300
+            tags: [GRPO, reasoning, reinforcement_learning]
+            rationale: Introduces GRPO and links reinforcement learning to verifiable mathematical reasoning.
+          - canonical_id: arxiv:2501.12948
+            title: "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2501.12948
+            tags: [reasoning, RLVR, distillation, GRPO]
+            rationale: A central reference for current reasoning-model post-training and distillation.
+          - canonical_id: arxiv:2601.22607
+            title: "From Self-Evolving Synthetic Data to Verifiable-Reward RL: Post-Training Multi-turn Interactive Tool-Using Agents"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://arxiv.org/abs/2601.22607
+            tags: [agent_post_training, tool_use, RLVR, synthetic_data]
+            rationale: Directly covers the agent post-training intersection and long-horizon tool interaction.
+        negative: []
+
+    - id: multimodal_intelligence
+      name: Multimodal, Generative & Spatial Intelligence
+      short_name: Multimodal
+      enabled: true
+      priority: core
+      base_weight: 0.95
+      require_ai_context: false
+      arxiv_categories:
+        - cs.CV
+        - cs.CL
+        - cs.AI
+        - cs.MM
+        - cs.SD
+        - cs.GR
+        - cs.RO
+        - eess.AS
+        - eess.IV
+      preferred_venues:
+        - CVPR
+        - ICCV
+        - ECCV
+        - ICLR
+        - ICML
+        - NeurIPS
+        - ACL
+        - EMNLP
+        - ACM Multimedia
+        - ICASSP
+        - Interspeech
+      include_terms:
+        - multimodal large language model
+        - MLLM
+        - large vision-language model
+        - LVLM
+        - vision-language model
+        - VLM
+        - audio-language model
+        - speech-language model
+        - video-language model
+        - native multimodal
+        - unified multimodal
+        - any-to-any
+        - omni-modal
+        - interleaved multimodal
+        - multimodal reasoning
+        - visual reasoning
+        - video understanding
+        - temporal reasoning
+        - long-video understanding
+        - video generation
+        - video editing
+        - controllable video generation
+        - audio understanding
+        - audio generation
+        - speech generation
+        - speech-to-speech
+        - music generation
+        - multimodal long context
+        - multimodal RAG
+        - multimodal search
+        - multimodal agent
+        - visual tool use
+        - multimodal reinforcement learning
+        - multimodal RLVR
+        - multimodal reward model
+        - spatial intelligence
+        - world model
+        - 3D generation
+        - 4D generation
+        - vision-language-action
+        - embodied multimodal model
+      exclude_terms:
+        - multimodal transportation optimization
+        - multimodal logistics
+      subtopics:
+        - native_and_any_to_any_models
+        - image_and_visual_reasoning
+        - audio_speech_and_music
+        - video_understanding_and_long_video
+        - video_generation_and_editing
+        - multimodal_agents_and_tool_use
+        - multimodal_post_training_and_rewards
+        - spatial_3d_4d_and_world_models
+        - real_time_multimodal_interaction
+        - grounding_evaluation_and_safety
+      seeds:
+        positive:
+          - canonical_id: arxiv:2401.13601
+            title: "MM-LLMs: Recent Advances in MultiModal Large Language Models"
+            resource_type: paper
+            tier: core
+            origin: user
+            url: https://arxiv.org/abs/2401.13601
+            tags: [survey, MLLM, taxonomy]
+            rationale: A broad map of multimodal LLM architectures, training, datasets, and evaluation.
+          - canonical_id: arxiv:2408.01319
+            title: "A Comprehensive Review of Multimodal Large Language Models: Performance and Challenges Across Different Tasks"
+            resource_type: paper
+            tier: core
+            origin: user
+            url: https://arxiv.org/abs/2408.01319
+            tags: [survey, MLLM, evaluation, challenges]
+            rationale: Complements the field map with task-level performance and open challenges.
+          - canonical_id: arxiv:2304.08485
+            title: Visual Instruction Tuning
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2304.08485
+            tags: [LLaVA, vision_language, instruction_tuning]
+            rationale: A foundational recipe for visual instruction tuning in large multimodal models.
+          - canonical_id: arxiv:2306.02858
+            title: "Video-LLaMA: An Instruction-tuned Audio-Visual Language Model for Video Understanding"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2306.02858
+            tags: [video_understanding, audio_visual, instruction_tuning]
+            rationale: Covers joint audio-visual instruction following for video understanding.
+          - canonical_id: arxiv:2306.12925
+            title: "AudioPaLM: A Large Language Model That Can Speak and Listen"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2306.12925
+            tags: [audio, speech, speech_to_speech, language_model]
+            rationale: A foundational spoken-language model spanning speech understanding and generation.
+          - canonical_id: arxiv:2312.14125
+            title: "VideoPoet: A Large Language Model for Zero-Shot Video Generation"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2312.14125
+            tags: [video_generation, multimodal_generation, autoregressive_model]
+            rationale: Represents language-model-style unified video and multimodal generation.
+          - canonical_id: arxiv:2402.12226
+            title: "AnyGPT: Unified Multimodal LLM with Discrete Sequence Modeling"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2402.12226
+            tags: [any_to_any, unified_multimodal, discrete_tokens]
+            rationale: A representative any-to-any system unifying modalities as discrete sequences.
+          - canonical_id: arxiv:2605.10832
+            title: Towards On-Policy Data Evolution for Visual-Native Multimodal Deep Search Agents
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://arxiv.org/abs/2605.10832
+            tags: [multimodal_agent, deep_search, on_policy_data]
+            rationale: Captures the active intersection of visual-native agents, search, and evolving post-training data.
+          - canonical_id: arxiv:2602.20739
+            title: "PyVision-RL: Forging Open Agentic Vision Models via RL"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://arxiv.org/abs/2602.20739
+            tags: [agentic_vision, reinforcement_learning, visual_tool_use]
+            rationale: Tracks reinforcement learning for open agentic vision models and visual tool use.
+          - canonical_id: arxiv:2606.09393
+            title: "CapRL++: Unified Reinforcement Learning with Verifiable Rewards for Dense Image and Video Captioning"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://arxiv.org/abs/2606.09393
+            tags: [video, image, RLVR, dense_captioning]
+            rationale: Connects verifiable-reward post-training to dense image and video understanding.
+        negative: []
+
+  domains:
+    - id: agentic_finance
+      name: Agentic AI for Finance & Financial Reasoning
+      short_name: Finance
+      enabled: true
+      priority: core_domain
+      base_weight: 0.90
+      require_ai_context: true
+      arxiv_categories:
+        - cs.AI
+        - cs.CL
+        - cs.LG
+        - q-fin.CP
+        - q-fin.EC
+        - q-fin.GN
+        - q-fin.PM
+        - q-fin.RM
+        - q-fin.ST
+        - q-fin.TR
+      preferred_venues:
+        - NeurIPS
+        - ICML
+        - ICLR
+        - ACL
+        - EMNLP
+        - KDD
+        - AAAI
+        - ACM ICAIF
+        - GenAI in Finance
+      include_terms:
+        - financial agent
+        - finance agent
+        - financial LLM
+        - financial reasoning
+        - financial research agent
+        - finance research agent
+        - financial tool use
+        - financial MCP
+        - financial RAG
+        - agentic financial retrieval
+        - SEC filing
+        - EDGAR
+        - 10-K
+        - 10-Q
+        - earnings call
+        - financial modeling agent
+        - finance spreadsheet agent
+        - portfolio agent
+        - investment agent
+        - trading agent
+        - multi-agent market simulation
+        - financial question answering
+        - financial time series language model
+        - multimodal financial reasoning
+        - financial risk LLM
+        - compliance agent
+        - audit agent
+        - fraud detection language model
+        - finance agent benchmark
+      exclude_terms:
+        - insurance sales agent
+        - real estate agent
+        - travel agent
+      subtopics:
+        - research_filings_and_document_reasoning
+        - tool_use_mcp_and_agentic_retrieval
+        - spreadsheets_modeling_and_scenario_analysis
+        - markets_portfolios_and_trading
+        - multimodal_text_chart_and_time_series
+        - risk_fraud_audit_and_compliance
+        - timeliness_provenance_and_factuality
+        - benchmarks_and_real_world_evaluation
+      seeds:
+        positive:
+          - canonical_id: arxiv:2407.06567
+            title: "FinCon: A Synthesized LLM Multi-Agent System with Conceptual Verbal Reinforcement for Enhanced Financial Decision Making"
+            resource_type: paper
+            tier: core
+            origin: user
+            url: https://arxiv.org/abs/2407.06567
+            tags: [multi_agent, finance, verbal_reinforcement, decision_making]
+            rationale: A central multi-agent financial decision-making system with feedback-driven improvement.
+          - canonical_id: arxiv:2311.13743
+            title: "FinMem: A Performance-Enhanced LLM Trading Agent with Layered Memory and Character Design"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2311.13743
+            tags: [trading_agent, layered_memory, financial_decision_making]
+            rationale: A representative financial agent centered on layered memory and trading decisions.
+          - canonical_id: arxiv:2306.06031
+            title: "FinGPT: Open-Source Financial Large Language Models"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2306.06031
+            tags: [financial_LLM, data_pipeline, adaptation]
+            rationale: Supplies foundational financial-domain modeling and data infrastructure for later agents.
+          - canonical_id: arxiv:2405.14767
+            title: "FinRobot: An Open-Source AI Agent Platform for Financial Applications using Large Language Models"
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://arxiv.org/abs/2405.14767
+            tags: [financial_agent, platform, multi_agent, tool_use]
+            rationale: A broad open platform for composing LLM agents across financial workflows.
+          - canonical_id: arxiv:2508.00828
+            title: "Finance Agent Benchmark: Benchmarking LLMs on Real-world Financial Research Tasks"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://arxiv.org/abs/2508.00828
+            tags: [benchmark, financial_research, real_world_evaluation]
+            rationale: Evaluates end-to-end financial research rather than isolated question answering.
+          - canonical_id: arxiv:2603.08262
+            title: "FinToolBench: Evaluating LLM Agents for Real-World Financial Tool Use"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://arxiv.org/abs/2603.08262
+            tags: [benchmark, tool_use, finance_agent]
+            rationale: Directly tests tool-using financial agents in realistic workflows.
+          - canonical_id: arxiv:2603.24943
+            title: "FinMCP-Bench: Benchmarking LLM Agents for Real-World Financial Tool Use under the Model Context Protocol"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://arxiv.org/abs/2603.24943
+            tags: [benchmark, MCP, financial_tool_use]
+            rationale: Tracks the emerging MCP-based tool ecosystem for financial agents.
+          - canonical_id: arxiv:2605.22664
+            title: "MBABench: Evaluating LLM Agents on End-to-End Spreadsheet Tasks in Finance"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://arxiv.org/abs/2605.22664
+            tags: [benchmark, spreadsheet_agent, financial_modeling]
+            rationale: Covers a high-value practical gap in end-to-end spreadsheet and financial modeling agents.
+        negative: []
+
+    - id: agentic_medicine
+      name: Agentic AI for Medicine, Healthcare & Clinical Reasoning
+      short_name: Medicine
+      enabled: true
+      priority: core_domain
+      base_weight: 0.90
+      require_ai_context: true
+      arxiv_categories:
+        - cs.AI
+        - cs.CL
+        - cs.CV
+        - cs.LG
+        - eess.IV
+        - physics.med-ph
+        - q-bio.QM
+      preferred_venues:
+        - Nature
+        - Nature Medicine
+        - Nature Machine Intelligence
+        - MIDL
+        - MICCAI
+        - MLHC
+        - AMIA
+        - ICLR
+        - ICML
+        - NeurIPS
+        - ACL
+        - EMNLP
+        - CVPR
+      include_terms:
+        - medical agent
+        - clinical agent
+        - healthcare agent
+        - diagnostic agent
+        - medical LLM
+        - clinical reasoning
+        - evidence-based medical agent
+        - clinical guideline retrieval
+        - medical RAG
+        - EHR agent
+        - electronic health record agent
+        - ambient clinical intelligence
+        - clinical documentation agent
+        - medical tool use
+        - clinical tool use
+        - medical calculator agent
+        - multimodal medical reasoning
+        - medical vision-language model
+        - radiology agent
+        - pathology agent
+        - surgical agent
+        - virtual multidisciplinary team
+        - virtual MDT
+        - clinical decision support language model
+        - patient triage agent
+        - clinical trial agent
+        - medical reinforcement learning
+        - medical RL
+        - medical AI uncertainty
+        - medical AI abstention
+        - calibrated medical model
+        - medical agent benchmark
+      exclude_terms:
+        - insurance sales agent
+        - pharmaceutical sales agent
+      subtopics:
+        - diagnosis_and_clinical_reasoning
+        - evidence_guidelines_and_medical_rag
+        - ehr_documentation_and_workflows
+        - medical_tools_and_code_execution
+        - multimodal_imaging_and_patient_data
+        - specialist_and_multi_agent_clinical_teams
+        - patient_communication_and_triage
+        - clinical_trials_and_operations
+        - post_training_and_medical_rl
+        - uncertainty_safety_privacy_and_regulation
+        - clinical_benchmarks_and_real_world_validation
+      seeds:
+        positive:
+          - canonical_id: doi:10.1038/s41591-026-04431-5
+            title: General-purpose large language models outperform specialized clinical AI tools on medical benchmarks
+            resource_type: paper
+            tier: recent
+            origin: user
+            url: https://www.nature.com/articles/s41591-026-04431-5
+            tags: [clinical_AI, generalist_model, benchmark, real_world_evaluation]
+            rationale: A current Nature Medicine comparison of general-purpose models and specialized clinical tools.
+          - canonical_id: arxiv:2605.02740
+            title: Foundation Models to Unlock Real-World Evidence from Nationwide Medical Claims
+            resource_type: paper
+            tier: recent
+            origin: user
+            url: https://arxiv.org/abs/2605.02740
+            tags: [foundation_model, medical_claims, real_world_evidence]
+            rationale: Connects foundation models to nationwide claims and real-world clinical evidence.
+          - canonical_id: doi:10.1038/s41586-023-05881-4
+            title: Foundation models for generalist medical artificial intelligence
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://www.nature.com/articles/s41586-023-05881-4
+            tags: [generalist_medical_AI, foundation_model, multimodal]
+            rationale: A foundational Nature perspective and framework for generalist medical AI systems.
+          - canonical_id: doi:10.1038/s41586-025-08866-7
+            title: Towards conversational diagnostic artificial intelligence
+            resource_type: paper
+            tier: core
+            origin: supplemented
+            url: https://www.nature.com/articles/s41586-025-08866-7
+            tags: [diagnosis, conversation, clinical_reasoning, AMIE]
+            rationale: A key real-world direction for interactive diagnostic agents and patient dialogue.
+          - canonical_id: doi:10.1038/s41591-026-04371-0
+            title: Advancing conversational diagnostic AI with multimodal reasoning
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://www.nature.com/articles/s41591-026-04371-0
+            tags: [diagnosis, multimodal_reasoning, conversation, clinical_agent]
+            rationale: Extends conversational diagnostic systems toward multimodal clinical reasoning.
+          - canonical_id: doi:10.1038/s41591-025-04074-y
+            title: "Reliability of LLMs as medical assistants for the general public: a randomized preregistered study"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://www.nature.com/articles/s41591-025-04074-y
+            tags: [reliability, medical_assistant, human_AI_interaction, randomized_study]
+            rationale: Grounds medical-agent evaluation in prospective human use rather than benchmarks alone.
+          - canonical_id: arxiv:2506.00555
+            title: "MMedAgent-RL: Optimizing Multi-Agent Collaboration for Multimodal Medical Reasoning"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://arxiv.org/abs/2506.00555
+            tags: [multi_agent, multimodal_medical_reasoning, reinforcement_learning]
+            rationale: Directly joins multi-agent coordination, multimodal clinical reasoning, and post-training.
+          - canonical_id: arxiv:2509.20490
+            title: "RadAgents: Multimodal Agentic Reasoning for Chest X-ray Interpretation with Radiologist-like Workflows"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://arxiv.org/abs/2509.20490
+            tags: [radiology_agent, chest_xray, multimodal, workflow]
+            rationale: Represents specialist agentic workflows for clinically grounded image interpretation.
+          - canonical_id: openreview:ZOuU0udyA4
+            title: "MedAgent-Pro: Towards Evidence-Based Multi-Modal Medical Diagnosis via Reasoning Agentic Workflow"
+            resource_type: paper
+            tier: recent
+            origin: supplemented
+            url: https://openreview.net/forum?id=ZOuU0udyA4
+            tags: [evidence_based_medicine, multimodal_diagnosis, agentic_workflow]
+            rationale: Emphasizes evidence retrieval and structured agentic workflows in multimodal diagnosis.
+        negative: []
+
+cross_cutting_facets:
+  - id: evaluation_reliability_safety
+    name: Evaluation, Reliability & Safety
+    score_boost: 0.12
+    include_terms:
+      - evaluation
+      - benchmark
+      - robustness
+      - generalization
+      - uncertainty
+      - calibration
+      - abstention
+      - hallucination
+      - reward hacking
+      - agent security
+      - privacy
+      - interpretability
+      - explainability
+      - monitorability
+      - human oversight
+      - auditability
+      - red teaming
+
+  - id: data_systems_efficiency
+    name: Data, Systems & Efficiency
+    score_boost: 0.07
+    include_terms:
+      - synthetic data
+      - data mixture
+      - dataset
+      - benchmark
+      - training efficiency
+      - inference efficiency
+      - long context
+      - memory efficiency
+      - serving
+      - on-device
+      - open-weight
+      - reproducibility
+      - scaling law
+
+intersection_boosts:
+  - id: agent_post_training
+    all_topics:
+      - agentic_systems
+      - post_training
+    boost: 0.20
+  - id: agent_multimodal
+    all_topics:
+      - agentic_systems
+      - multimodal_intelligence
+    boost: 0.18
+  - id: finance_agent
+    all_topics:
+      - agentic_systems
+      - agentic_finance
+    boost: 0.18
+  - id: medicine_agent
+    all_topics:
+      - agentic_systems
+      - agentic_medicine
+    boost: 0.18
+  - id: post_training_multimodal
+    all_topics:
+      - post_training
+      - multimodal_intelligence
+    boost: 0.16
+  - id: agent_evaluation_safety
+    all_topics:
+      - agentic_systems
+    all_facets:
+      - evaluation_reliability_safety
+    boost: 0.14
+
+frontier_watch:
+  enabled: true
+  daily_share: 0.15
+  activation:
+    minimum_independent_sources: 2
+    minimum_papers_in_7_days: 3
+    require_connection_to_core_topic: true
+  lanes:
+    - id: world_models_embodied_robotics
+      include_terms:
+        - world model
+        - embodied AI
+        - robotics foundation model
+        - vision-language-action
+        - VLA
+        - spatial intelligence
+    - id: ai_for_science
+      include_terms:
+        - AI for science
+        - scientific foundation model
+        - AI mathematician
+        - AI scientist
+        - protein foundation model
+        - drug discovery foundation model
+        - materials discovery
+    - id: architectures_and_latent_reasoning
+      include_terms:
+        - latent reasoning
+        - recurrent reasoning
+        - mixture of experts
+        - state space model
+        - novel language model architecture
+    - id: interpretability_and_ai_security
+      include_terms:
+        - mechanistic interpretability
+        - chain-of-thought monitorability
+        - model organism of misalignment
+        - agent security
+        - prompt injection defense
+    - id: efficient_and_on_device_intelligence
+      include_terms:
+        - efficient foundation model
+        - on-device language model
+        - inference optimization
+        - sparse model
+        - model compression
+
+tagging:
+  # Every paper may receive multiple tags; no item is copied between topic pools.
+  prefixes:
+    topic: topic/
+    subtopic: subtopic/
+    facet: facet/
+    source: source/
+    stage: stage/
+  workflow_stages:
+    - candidate
+    - saved
+    - skimmed
+    - deep-read
+    - core
+    - archived
+
+feedback:
+  positive_actions:
+    - save
+    - deep-read
+    - core
+  negative_actions:
+    - skip
+    - mute-similar
+  seed_update_policy:
+    positive_from_stages:
+      - deep-read
+      - core
+    negative_from_actions:
+      - mute-similar
+    minimum_feedback_before_automatic_reweighting: 20

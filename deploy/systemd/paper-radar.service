@@ -1,0 +1,13 @@
+[Unit]
+Description=Personal Paper Radar daily discovery
+Documentation=https://github.com/CYP0630/Personal_Paper_Reading
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Personal_Paper_Reading
+EnvironmentFile=-%h/.config/paper-radar/env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=%h/Personal_Paper_Reading/.venv/bin/paper-radar discover --cache-dir %h/.cache/paper-radar --output-root %h/.local/share/paper-radar
+

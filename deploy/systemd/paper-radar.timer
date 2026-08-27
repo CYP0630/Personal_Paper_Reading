@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Personal Paper Radar every morning
+
+[Timer]
+OnCalendar=*-*-* 07:30:00 America/New_York
+Persistent=true
+RandomizedDelaySec=10m
+Unit=paper-radar.service
+
+[Install]
+WantedBy=timers.target
+

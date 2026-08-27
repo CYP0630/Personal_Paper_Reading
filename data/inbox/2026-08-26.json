@@ -1,0 +1,520 @@
+{
+  "generated_at": "2026-08-26T23:31:09.580583-04:00",
+  "window": {
+    "start": "2026-08-22T23:59:59.999999-04:00",
+    "end": "2026-08-26T23:59:59.999999-04:00"
+  },
+  "stats": {
+    "source_counts": {
+      "arxiv": 60,
+      "huggingface_papers": 38,
+      "nature": 34,
+      "openreview": 0,
+      "pubmed": 24
+    },
+    "source_errors": {},
+    "fetched": 156,
+    "unique": 156,
+    "eligible": 32,
+    "selected": 8
+  },
+  "papers": [
+    {
+      "canonical_id": "arxiv:2608.24646",
+      "title": "On-Policy Self-Distillation in Diffusion Models",
+      "source": "huggingface_papers",
+      "url": "https://huggingface.co/papers/2608.24646",
+      "abstract": "Reinforcement learning can align diffusion models with human preferences and task-specific objectives, but endpoint rewards do not specify how an intermediate denoising prediction should change. We introduce DiffusionOPSD as an on-policy self-distillation framework that converts image-level reward guidance into explicit targets for clean-output predictions at sampled queries. At each outer iteration, a frozen behavior policy generates trajectories and supplies query states and anchors. Reward gradients construct bounded positive and negative targets around each anchor. The trainable policy fits these targets as detached supervision through finite fitting before an exponential moving average update refreshes the behavior policy. This setup lets us measure target construction and finite realization separately. Controlled same-query experiments show that larger target-construction gains do not necessarily translate into larger realized gains after a single fitting update. Across SD 3.5-M and the step-distilled Z-Image-Turbo, our approach achieves the best final held-out scores in 19 of 20 reward-matched settings across two backbones and ten evaluators. It outperforms the strongest competing method by up to 44.0% and reduces training GPU-hours relative to DiffusionNFT by 40% on SD 3.5-M and 63% on Z-Image-Turbo. These results support on-policy self-distillation as an efficient and analyzable approach to diffusion post-training by converting image-level reward guidance into explicit and continually refreshed intermediate supervision, thereby opening a path toward more efficient and diagnosable alignment.",
+      "authors": [
+        "Wei Zhou",
+        "Xiongwei Zhu",
+        "Lingdong Kong",
+        "Bo Chen",
+        "Lei Zhang",
+        "Yongyuan Liang",
+        "Xiaoxia Hou",
+        "Ye Tian",
+        "Xian Sun",
+        "Yingshuo Wang",
+        "Linfeng Li",
+        "Shengqiong Wu",
+        "Leigang Qu",
+        "Feng Li",
+        "Wei Liu",
+        "Julian McAuley",
+        "Tat-Seng Chua"
+      ],
+      "published_at": "2026-08-24T20:00:00Z",
+      "updated_at": "",
+      "pdf_url": "https://arxiv.org/pdf/2608.24646",
+      "venue": null,
+      "source_ids": {
+        "arxiv": "2608.24646",
+        "huggingface": "2608.24646"
+      },
+      "categories": [],
+      "metadata": {
+        "hf_upvotes": 50,
+        "github_url": "https://github.com/worldbench/DiffusionOPSD",
+        "project_url": "https://diffusionopsd.github.io/",
+        "selection_lane": "trend"
+      },
+      "discovered_by": [
+        "huggingface_papers"
+      ],
+      "topics": [
+        "post_training"
+      ],
+      "matched_terms": {
+        "post_training": [
+          "post-training",
+          "PPO",
+          "DPO"
+        ]
+      },
+      "scores": {
+        "fit": 0.7174,
+        "heat": 0.57,
+        "confidence": 0.895,
+        "rank": 0.7057
+      },
+      "reasons": [
+        "匹配 post_training: post-training, PPO, DPO",
+        "接近种子论文：Training Language Models to Follow Instructions with Human Feedback",
+        "入选 Hugging Face Daily Papers"
+      ]
+    },
+    {
+      "canonical_id": "arxiv:2608.25973",
+      "title": "SciMIF: Understanding Multimodal Instruction Following in Scientific Domains",
+      "source": "arxiv",
+      "url": "https://arxiv.org/abs/2608.25973v1",
+      "abstract": "Understanding instruction-following capabilities in scientific domains is essential for effectively leveraging Multimodal Large Language Models (MLLMs) to advance the development of scientific fields. In this work, we introduce SciMIF, a novel benchmark designed to evaluate the capability of MLLMs in following complex scientific instructions. Specifically, based on an extensive analysis of 22 distinct tasks across 5 representative scientific disciplines, we propose a comprehensive taxonomy comprising 10 constraint groups that captures both general functional requirements and discipline-specific characteristics. Guided by this taxonomy, we develop a high-fidelity instruction injection pipeline to systematically augment existing scientific datasets. We conduct comprehensive experiments on multiple state-of-the-art closed-source and open-source MLLMs. Our findings reveal significant performance disparities across different scientific disciplines, with chemistry posing greater challenges for current MLLMs. Furthermore, we observe that increasing the model scale does not yield corresponding improvements in constraint adherence, and current models still struggle severely with fine-grained constraints and instructions requiring the deep application of disciplinary knowledge. SciMIF fills the current void in evaluating multimodal instruction adherence within scientific domains, laying a crucial foundation for future enhancements of MLLMs in rigorous scientific applications. Data and code will be released at https://github.com/shenye7436/SciMIF .",
+      "authors": [
+        "Ye Shen",
+        "Yuting Zheng",
+        "Dun Pei",
+        "Zijian Chen",
+        "Wenlong Zhang",
+        "Qi Jia",
+        "Guangtao Zhai"
+      ],
+      "published_at": "2026-08-26T16:30:20Z",
+      "updated_at": "2026-08-26T16:30:20Z",
+      "pdf_url": "https://arxiv.org/pdf/2608.25973v1",
+      "venue": null,
+      "source_ids": {
+        "arxiv": "2608.25973"
+      },
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "metadata": {
+        "comment": "21pages, 9 figures, 16 tables",
+        "selection_lane": "core_fit"
+      },
+      "discovered_by": [
+        "arxiv"
+      ],
+      "topics": [
+        "multimodal_intelligence"
+      ],
+      "matched_terms": {
+        "multimodal_intelligence": [
+          "multimodal large language model",
+          "MLLM"
+        ]
+      },
+      "scores": {
+        "fit": 0.8028,
+        "heat": 0.2726,
+        "confidence": 0.825,
+        "rank": 0.699
+      },
+      "reasons": [
+        "匹配 multimodal_intelligence: multimodal large language model, MLLM",
+        "接近种子论文：A Comprehensive Review of Multimodal Large Language Models: Performance and Challenges Across Different Tasks"
+      ]
+    },
+    {
+      "canonical_id": "arxiv:2608.26105",
+      "title": "VBVR-Pro: A Scalable and Verifiable Suite for Native Visual Reasoning",
+      "source": "arxiv",
+      "url": "https://arxiv.org/abs/2608.26105v1",
+      "abstract": "Native visual reasoning treats visual generation as the medium of reasoning itself: visual states (i.e. images and videos) are not merely inputs to be understood or outputs to be rendered, but first-class substrates for problem solving beyond language. Yet progress remains bottlenecked by the lack of scalable training tasks, reliable feedback, and controlled comparisons across generative substrates. In this work, we introduce VBVR-Pro, a closed-loop testbed that makes native visual reasoning through generation trainable, verifiable, optimizable, and experimentally controllable. 1) Task scaling. VBVR-Pro turns visual reasoning into a controlled task space of 300 procedurally generated tasks. Models trained on VBVR-Pro show strong transfer beyond the proposed suite across seven external visual reasoning benchmarks such as RISE-Video, MME-CoF-Pro, and BabyVision. 2) Verifiable rewards. VBVR-Pro provides verifiable reward scorers for task-grounded evaluation. Through a systematic study of leading MLLMs as judges, we identify recurring failure modes of the prevalent VLM-as-a-judge paradigm. In contrast, the proposed scorers are grounded in deterministic, task-specific rules, achieve fine-grained alignment with human judgments. Importantly, they serve as reliable reward signals for large-scale multi-task reinforcement learning and demonstrate stronger post-RL performance across visual reasoning tasks. 3) Mechanism study. VBVR-Pro enables controlled modality studies across more than 30 image, video, and interleaved generators. Our analysis shows that video generation remains strongest for tasks requiring persistent spatiotemporal state tracking, while interleaved generation provides a compute-efficient alternative. Critically, ablations and probing suggest the presence of vision-native trajectories that are crucial to visual reasoning. We release all data, models, scorers, and code.",
+      "authors": [
+        "Junxiang Xu",
+        "Ruisi Wang",
+        "Fanyi Pu",
+        "Maijunxian Wang",
+        "Ran Ji",
+        "Tongxi Zhou",
+        "Chenyang Gu",
+        "Jing Zuo",
+        "Hongcan Xiao",
+        "Yimeng Geng",
+        "Wanqi Yin",
+        "Wei Chen",
+        "Oscar Qian",
+        "Zhengan Yan",
+        "Ziqi Huang",
+        "Haiwen Diao",
+        "Liang Pan",
+        "Bo Li",
+        "Xiangyu Fan",
+        "Dezhi Luo",
+        "Fengyuan Yu",
+        "Zehong Zhao",
+        "Qingying Gao",
+        "Tinghui Zhu",
+        "Yilan Zhang",
+        "Jingqi Tong",
+        "Pinyuan Feng",
+        "Zhengze Jiang",
+        "Letian Wang",
+        "Ziyu Guo",
+        "Renrui Zhang",
+        "Jieneng Chen",
+        "Sonia Joseph",
+        "Constantin Venhoff",
+        "Saman Motamed",
+        "Mengyue Yang",
+        "Chandra Sripada",
+        "Alan Yuille",
+        "Philip Torr",
+        "Lvmin Zhang",
+        "Vikash Kumar",
+        "Daniel Khashabi",
+        "Nikolaus Kriegeskorte",
+        "Raphaël Millière",
+        "Vincent C. Müller",
+        "Anyi Rao",
+        "Quan Wang",
+        "Ziwei Liu",
+        "Dahua Lin",
+        "Lei Yang",
+        "Hokin Deng",
+        "Zhongang Cai"
+      ],
+      "published_at": "2026-08-26T17:59:51Z",
+      "updated_at": "2026-08-26T17:59:51Z",
+      "pdf_url": "https://arxiv.org/pdf/2608.26105v1",
+      "venue": null,
+      "source_ids": {
+        "arxiv": "2608.26105"
+      },
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.LG",
+        "cs.MM",
+        "cs.RO"
+      ],
+      "metadata": {
+        "comment": "Homepage: https://video-reason.com/",
+        "selection_lane": "cross_topic"
+      },
+      "discovered_by": [
+        "arxiv"
+      ],
+      "topics": [
+        "multimodal_intelligence",
+        "post_training"
+      ],
+      "matched_terms": {
+        "multimodal_intelligence": [
+          "MLLM",
+          "VLM",
+          "visual reasoning",
+          "video generation"
+        ],
+        "post_training": [
+          "verifiable reward"
+        ]
+      },
+      "scores": {
+        "fit": 0.7987,
+        "heat": 0.276,
+        "confidence": 0.825,
+        "rank": 0.6968
+      },
+      "reasons": [
+        "匹配 multimodal_intelligence: MLLM, VLM, visual reasoning",
+        "接近种子论文：CapRL++: Unified Reinforcement Learning with Verifiable Rewards for Dense Image and Video Captioning"
+      ]
+    },
+    {
+      "canonical_id": "arxiv:2608.23311",
+      "title": "Beyond the Stability-Exploration Dilemma: Environmental Regularization for LLM Policy Optimization",
+      "source": "huggingface_papers",
+      "url": "https://huggingface.co/papers/2608.23311",
+      "abstract": "Policy optimization (PO) for Large Language Models faces a stability--exploration trade-off, currently mediated by an action-side Policy-KL regularizer. This puts practitioners in a double bind: keeping Policy-KL constrains response behavior and consumes the action-side exploration budget, while dropping it leaves the optimization without an explicit drift control. We argue for an alternative that breaks the dilemma by moving regularization to the input side. As training progresses, the distribution over training queries induced by the current policy drifts unchecked from its pre-RL reference distribution. Concretely, Environment-Regularized Policy Optimization (ERPO) introduces a Query-KL (QKL) term that bounds this query distribution shift, together with a dataset-static reference-derived per-query weight that biases each per-query update toward queries typical under the reference. The QKL gradient flows strictly through the query likelihood; the response score function used by policy-gradient estimators does not appear in the QKL term, so QKL exerts no direct gradient pressure on the response distribution---exploration is preserved. ERPO plugs into GRPO/PPO/REINFORCE-style pipelines without additional forward passes. On six mathematical reasoning benchmarks, ERPO replaces the standard Policy-KL regularizer while achieving effective control over query distribution drift, delivering stronger accuracy and substantially more stable behavior under high-temperature decoding and long-horizon training.Our source code are available at https://github.com/alibaba/ERPO",
+      "authors": [
+        "Xianlei Zhou",
+        "Xiangdi Meng",
+        "Yu He",
+        "Tianyu Qi",
+        "Shuyan Guan",
+        "Xianli Zhang",
+        "Jian Zhang",
+        "Xin Li",
+        "Qika Lin",
+        "Jun Liu"
+      ],
+      "published_at": "2026-08-23T20:00:00Z",
+      "updated_at": "",
+      "pdf_url": "https://arxiv.org/pdf/2608.23311",
+      "venue": null,
+      "source_ids": {
+        "arxiv": "2608.23311",
+        "huggingface": "2608.23311"
+      },
+      "categories": [],
+      "metadata": {
+        "hf_upvotes": 15,
+        "github_url": "https://github.com/AlibabaResearch/ERPO",
+        "project_url": "",
+        "selection_lane": "trend"
+      },
+      "discovered_by": [
+        "huggingface_papers"
+      ],
+      "topics": [
+        "post_training"
+      ],
+      "matched_terms": {
+        "post_training": [
+          "PPO",
+          "GRPO",
+          "LoRA",
+          "policy optimization"
+        ]
+      },
+      "scores": {
+        "fit": 0.7315,
+        "heat": 0.4226,
+        "confidence": 0.895,
+        "rank": 0.6861
+      },
+      "reasons": [
+        "匹配 post_training: PPO, GRPO, LoRA",
+        "接近种子论文：DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models",
+        "入选 Hugging Face Daily Papers"
+      ]
+    },
+    {
+      "canonical_id": "arxiv:2608.26013",
+      "title": "VISA: Agentic Self-Evolving Data Synthesis for Multimodal Instruction Following",
+      "source": "arxiv",
+      "url": "https://arxiv.org/abs/2608.26013v1",
+      "abstract": "Multimodal instruction-following models require training data that is accurate, diverse, verifiable, and challenging. Existing synthesis pipelines typically follow a one-pass generate-and-filter paradigm, discarding feedback from failed samples, verifier outcomes, and target-model errors. We present VISA (Visual Instruction Synthesis Agent), an agentic framework that reformulates multimodal instruction synthesis as a self-evolving loop. At each round, VISA analyzes an image to filter incompatible constraints and discover new verifiable ones, samples diversity- and difficulty-aware constraint sets from persistent memory, generates candidate instructions, and verifies the resulting samples with executable tools and structured large language model judges. Failed samples trigger diagnostic-guided recovery, while accepted samples are probed against the target model to estimate difficulty. The resulting verifier signals and target-model failure profiles are written back to memory, allowing subsequent rounds to adaptively expand the constraint space, reduce template repetition, and focus on unresolved model weaknesses. The same verifier contracts further provide reward signals for reinforcement learning without a separately trained reward model. Experiments on MM-IFEval show that VISA consistently improves multimodal instruction following over strong baselines, while preserving general multimodal capability across seven public benchmarks.",
+      "authors": [
+        "Min Zeng",
+        "Guanxin Tan",
+        "Libin Cen",
+        "Yawei Wen",
+        "Rui Hu",
+        "Liuyang Bian",
+        "Xiaolong Chen",
+        "Xiaoxin Chen"
+      ],
+      "published_at": "2026-08-26T16:55:58Z",
+      "updated_at": "2026-08-26T16:55:58Z",
+      "pdf_url": "https://arxiv.org/pdf/2608.26013v1",
+      "venue": null,
+      "source_ids": {
+        "arxiv": "2608.26013"
+      },
+      "categories": [
+        "cs.CL"
+      ],
+      "metadata": {
+        "comment": "",
+        "selection_lane": "core_fit"
+      },
+      "discovered_by": [
+        "arxiv"
+      ],
+      "topics": [
+        "post_training"
+      ],
+      "matched_terms": {
+        "post_training": [
+          "reward model",
+          "self-evolving data"
+        ]
+      },
+      "scores": {
+        "fit": 0.7701,
+        "heat": 0.2736,
+        "confidence": 0.825,
+        "rank": 0.6763
+      },
+      "reasons": [
+        "匹配 post_training: reward model, self-evolving data",
+        "接近种子论文：Training Language Models to Follow Instructions with Human Feedback"
+      ]
+    },
+    {
+      "canonical_id": "arxiv:2608.25986",
+      "title": "Multi-Granularity Context-Enhanced RAG over Multimodal Knowledge Graphs",
+      "source": "arxiv",
+      "url": "https://arxiv.org/abs/2608.25986v1",
+      "abstract": "Retrieval-augmented generation (RAG) is widely used to mitigate hallucination issues in large language models (LLMs) and multimodal large language models (MLLMs). In particular, knowledge graph (KG)-based RAG leverages structured knowledge to provide (M)LLMs with high-quality external information. Building on these works, recent studies have explored multimodal knowledge graphs (MMKGs) as knowledge bases for GraphRAG. This enables Graph RAG to integrate knowledge across multiple modalities, thereby further enhancing its performance. However, existing MMKG-based RAG methods generally follow a common pipeline in which different modalities are largely processed independently before being fusion. As a result, textual context is only used to a limited extent during visual information extraction and subsequent multimodal knowledge fusion. This brings a semantic gap between images and text which limits the multimodal GraphRAG performance. To address this issue, we propose a novel framework for constructing a Context-Enhanced MMKG (CEMMKG) to better support multimodal GraphRAG. The proposed CEMMKG enriches each image with complementary textual context at both local and global scopes. Local context goes beyond the surrounding text by incorporating sentences that are semantically related to the image, while global context provides a summary of the entire passage. We further introduce a multi-granularity design for the local context, allowing it to capture semantically relevant information at different levels of detail. Extensive experiments on the selected vision-centric dataset validate that CEMMKG is effective in leveraging contextual information to improve MMKG-based RAG performance. Moreover, its effectiveness across different MMKG-based RAG methods demonstrates its broad applicability.",
+      "authors": [
+        "Zongyu Wu",
+        "Yilong Wang",
+        "Xiaochen Wang",
+        "Minhua Lin",
+        "Zhichao Xu",
+        "Fenglong Ma",
+        "Xiang Zhang",
+        "Suhang Wang"
+      ],
+      "published_at": "2026-08-26T16:38:02Z",
+      "updated_at": "2026-08-26T16:38:02Z",
+      "pdf_url": "https://arxiv.org/pdf/2608.25986v1",
+      "venue": null,
+      "source_ids": {
+        "arxiv": "2608.25986"
+      },
+      "categories": [
+        "cs.AI"
+      ],
+      "metadata": {
+        "comment": "Preprint",
+        "selection_lane": "core_fit"
+      },
+      "discovered_by": [
+        "arxiv"
+      ],
+      "topics": [
+        "multimodal_intelligence"
+      ],
+      "matched_terms": {
+        "multimodal_intelligence": [
+          "multimodal large language model",
+          "MLLM"
+        ]
+      },
+      "scores": {
+        "fit": 0.767,
+        "heat": 0.2729,
+        "confidence": 0.825,
+        "rank": 0.674
+      },
+      "reasons": [
+        "匹配 multimodal_intelligence: multimodal large language model, MLLM",
+        "接近种子论文：A Comprehensive Review of Multimodal Large Language Models: Performance and Challenges Across Different Tasks"
+      ]
+    },
+    {
+      "canonical_id": "arxiv:2608.23035",
+      "title": "MobilePA-Bench: Benchmarking Mobile Planner Agents on Complex Real-World Tasks",
+      "source": "huggingface_papers",
+      "url": "https://huggingface.co/papers/2608.23035",
+      "abstract": "As on-device LLM agents evolve into personal copilots, the mobile operating system has become a key testbed for this paradigm, making rigorous capability evaluation essential. Yet existing benchmarks fall into two camps, each with a critical blind spot: GUI-centric benchmarks test surface-level screen manipulation while overlooking background tool use and long-horizon planning, whereas static function-calling benchmarks rely on offline API matching that is detached from real runtime constraints. To close this gap, we present MobilePA-Bench, an interactive, stateful, and tool-centric benchmark for evaluating the tool-calling and planning abilities of mobile planning agents. MobilePA-Bench runs on an executable sandbox that maintains live application databases and returns structured feedback, spanning 13 functional domains and 212 realistic mobile tools. Beyond basic tool use, it evaluates a central planning agent along three advanced dimensions: (1)~Sub-agent Collaboration---decomposing a complex task and delegating specialized work to capable sub-agents; (2)~Memory Usage---recalling stored memories, user profiles, and past preferences to resolve implicit requests; and (3)~Skill Usage---invoking pre-packaged composite skills instead of planning every step from scratch. Extensive experiments show that current frontier LLMs remain unreliable in mobile settings: performance drops sharply under strict tool ordering, permission limits, and unexpected runtime errors. By pairing an interactive function-calling sandbox with evidence-based verification, MobilePA-Bench serves as both a practical diagnostic benchmark and an interactive foundation for agentic reinforcement learning---accelerating the development of dependable mobile agents.",
+      "authors": [
+        "Yi Zhu",
+        "Xiongwei Wu",
+        "Qiyi Wang",
+        "Tingyu Qu",
+        "Jiajun Liu",
+        "Sihan Cao",
+        "Long Chen",
+        "Weigao Sun",
+        "Feida Zhu",
+        "Yiran Zhong",
+        "Steven Hoi"
+      ],
+      "published_at": "2026-08-23T20:00:00Z",
+      "updated_at": "",
+      "pdf_url": "https://arxiv.org/pdf/2608.23035",
+      "venue": null,
+      "source_ids": {
+        "arxiv": "2608.23035",
+        "huggingface": "2608.23035"
+      },
+      "categories": [],
+      "metadata": {
+        "hf_upvotes": 38,
+        "github_url": "https://github.com/Tongyi-MAI/MobilePA-Bench",
+        "project_url": "https://tongyi-mai.github.io/MobilePA-Bench/",
+        "selection_lane": "core_fit"
+      },
+      "discovered_by": [
+        "huggingface_papers"
+      ],
+      "topics": [
+        "agentic_systems"
+      ],
+      "matched_terms": {
+        "agentic_systems": [
+          "LLM agent",
+          "tool use"
+        ]
+      },
+      "scores": {
+        "fit": 0.6778,
+        "heat": 0.5359,
+        "confidence": 0.895,
+        "rank": 0.6711
+      },
+      "reasons": [
+        "匹配 agentic_systems: LLM agent, tool use",
+        "接近种子论文：MUSE-Autoskill: Self-Evolving Agents via Skill Creation, Memory, Management, and Evaluation",
+        "入选 Hugging Face Daily Papers"
+      ]
+    },
+    {
+      "canonical_id": "arxiv:2608.25992",
+      "title": "ProgRouter: Online Progress-Guided Orchestration for Multi-Agent LLM Workflows under Quality-Cost Tradeoffs",
+      "source": "arxiv",
+      "url": "https://arxiv.org/abs/2608.25992v1",
+      "abstract": "Multi-agent large language model (LLM) workflows have emerged as a powerful paradigm for solving complex, open-ended tasks through collaborative reasoning among specialized LLM agents, but they incur substantial operating costs due to repeated LLM invocations and long-horizon context accumulation. Existing cascade routing methods make one-shot, query-level decisions and cannot adapt to the dynamic, state-dependent nature of multi-step workflows, in which the right LLM at each step depends on evolving task progress, remaining task difficulty, and cost-efficiency requirements. We present ProgRouter, an online progress-guided routing framework that adaptively selects LLM agents across workflow steps to preserve task-solving quality while adhering to time and cost budgets. ProgRouter introduces a multi-view task progress scorer that combines coarse workflow outcome regimes with fine-grained signals on subtask completion, progress trends, and workflow state quality. Then, a dual-path task progress predictor and an adaptive meta-gating mechanism estimate the progress gain for each candidate routed LLM. ProgRouter makes online step-wise routing decisions that balance progress gain, task time budgets, and long-term operating cost efficiency. Experiments on HumanEval Plus, MBPP, MATH-500, and ASQA, spanning agentic code generation, mathematical reasoning, and retrieval-augmented long-form question answering, demonstrate that ProgRouter reduces the operating cost relative to key baselines while maintaining strong task-solving performance.",
+      "authors": [
+        "Somgyuan Li",
+        "Ahmed M. Abdelmoniem",
+        "Shiqiang Wang"
+      ],
+      "published_at": "2026-08-26T16:42:02Z",
+      "updated_at": "2026-08-26T16:42:02Z",
+      "pdf_url": "https://arxiv.org/pdf/2608.25992v1",
+      "venue": null,
+      "source_ids": {
+        "arxiv": "2608.25992"
+      },
+      "categories": [
+        "cs.AI",
+        "cs.MA"
+      ],
+      "metadata": {
+        "comment": "Accepted in Findings of the Association for Computational Linguistics: EMNLP 2026. Index Terms: Collaborative agentic workflows, LLM agent orchestration, Quality-cost trade-off, Task progress prediction, Online decision-making",
+        "selection_lane": "core_fit"
+      },
+      "discovered_by": [
+        "arxiv"
+      ],
+      "topics": [
+        "agentic_systems"
+      ],
+      "matched_terms": {
+        "agentic_systems": [
+          "LLM agent",
+          "multi-agent LLM"
+        ]
+      },
+      "scores": {
+        "fit": 0.7443,
+        "heat": 0.273,
+        "confidence": 0.825,
+        "rank": 0.6582
+      },
+      "reasons": [
+        "匹配 agentic_systems: LLM agent, multi-agent LLM",
+        "接近种子论文：Voyager: An Open-Ended Embodied Agent with Large Language Models"
+      ]
+    }
+  ]
+}
