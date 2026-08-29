@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import argparse
+import json
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -7,8 +9,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 from paper_radar.config import ResearchConfig
+from paper_radar.cli import run_discover
 from paper_radar.dedupe import deduplicate
 from paper_radar.delivery import DeliveryError, publish_with_hermes
+from paper_radar.delivery import DeliveryResult
+from paper_radar.delivery_history import DeliveryHistory
 from paper_radar.http import HttpClient
 from paper_radar.models import Paper
 from paper_radar.reading import (
@@ -19,6 +24,7 @@ from paper_radar.reading import (
     local_pdf_canonical_id,
     paper_from_url,
     paper_storage_key,
+    publish_deep_read_run,
     render_reading_index,
 )
 from paper_radar.scoring import score_papers, select_digest
@@ -314,6 +320,175 @@ class CoreTests(unittest.TestCase):
                 assets_dir=assets,
             )
             self.assertEqual(item.asset_paths, [str(linked.resolve())])
+
+    def test_delivery_history_bootstraps_prior_days_only(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            inbox = root / "data" / "inbox"
+            inbox.mkdir(parents=True)
+            (inbox / "2026-08-28.json").write_text(
+                json.dumps(
+                    {"papers": [{"canonical_id": "arxiv:old", "title": "Old Paper"}]}
+                ),
+                encoding="utf-8",
+            )
+            (inbox / "2026-08-29.json").write_text(
+                json.dumps(
+                    {"papers": [{"canonical_id": "arxiv:today", "title": "Today Paper"}]}
+                ),
+                encoding="utf-8",
+            )
+            reading = root / "readings" / "2026-08-28"
+            reading.mkdir(parents=True)
+            (reading / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "papers": [
+                            {
+                                "canonical_id": "arxiv:old",
+                                "title": "Old Paper",
+                                "status": "complete",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            history = DeliveryHistory.for_output_root(root, exclude_date="2026-08-29")
+            self.assertTrue(history.contains("discovery", "ARXIV:OLD"))
+            self.assertTrue(history.contains("deep_read", "arxiv:old"))
+            self.assertFalse(history.contains("discovery", "arxiv:today"))
+
+    @patch("paper_radar.cli.publish_with_hermes")
+    @patch("paper_radar.cli.discover")
+    def test_discovery_publish_only_sends_unseen_top_papers(self, discover_mock, publish) -> None:
+        from paper_radar.pipeline import DiscoveryResult
+
+        publish.return_value = DeliveryResult(
+            provider="hermes",
+            target="discord:1542379320289263676",
+        )
+        old = Paper(
+            canonical_id="arxiv:old",
+            title="Old Paper",
+            source="arxiv",
+            url="https://arxiv.org/abs/old",
+            topics=["agentic_systems"],
+            scores={"fit": 0.9, "heat": 0.8},
+        )
+        new = Paper(
+            canonical_id="arxiv:new",
+            title="New Paper",
+            source="arxiv",
+            url="https://arxiv.org/abs/new",
+            topics=["agentic_systems"],
+            scores={"fit": 0.8, "heat": 0.7},
+        )
+        discover_mock.return_value = DiscoveryResult(
+            generated_at="2026-08-29T07:30:00-04:00",
+            window_start="2026-08-25T23:59:59-04:00",
+            window_end="2026-08-29T23:59:59-04:00",
+            fetched_count=2,
+            unique_count=2,
+            eligible_count=2,
+            selected=[old, new],
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            inbox = root / "data" / "inbox"
+            inbox.mkdir(parents=True)
+            (inbox / "2026-08-28.json").write_text(
+                json.dumps({"papers": [{"canonical_id": "arxiv:old", "title": "Old Paper"}]}),
+                encoding="utf-8",
+            )
+            args = argparse.Namespace(
+                publish=True,
+                no_write=False,
+                config=str(ROOT / "config" / "topics.yaml"),
+                date="2026-08-29",
+                lookback_days=None,
+                digest_size=None,
+                candidate_pool_size=None,
+                source=None,
+                cache_dir=str(root / "cache"),
+                output_root=str(root),
+                offline=False,
+                publish_target=None,
+            )
+
+            self.assertEqual(run_discover(args), 0)
+            message = publish.call_args.args[1]
+            self.assertIn("New Paper", message)
+            self.assertNotIn("Old Paper", message)
+            history = DeliveryHistory.for_output_root(root)
+            self.assertTrue(history.contains("discovery", "arxiv:old"))
+            self.assertTrue(history.contains("discovery", "arxiv:new"))
+
+    @patch("paper_radar.reading.publish_with_hermes")
+    def test_deep_read_publish_skips_previously_delivered_papers(self, publish) -> None:
+        publish.return_value = DeliveryResult(
+            provider="hermes",
+            target="discord:1542379320289263676",
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            notes = root / "library" / "papers"
+            old_note = notes / "arxiv-old" / "deep-read.md"
+            new_note = notes / "arxiv-new" / "deep-read.md"
+            old_note.parent.mkdir(parents=True)
+            new_note.parent.mkdir(parents=True)
+            old_note.write_text("## 一句话总结\n旧论文。\n", encoding="utf-8")
+            new_note.write_text("## 一句话总结\n新论文。\n", encoding="utf-8")
+            index = root / "readings" / "2026-08-29" / "index.md"
+            index.parent.mkdir(parents=True)
+            index.write_text("full index", encoding="utf-8")
+            run = DeepReadRun(
+                target_date="2026-08-29",
+                generated_at="2026-08-29T08:00:00-04:00",
+                input_path=str(root / "data" / "inbox" / "2026-08-29.json"),
+                output_root=str(root),
+                items=[
+                    DeepReadItem(
+                        rank=1,
+                        canonical_id="arxiv:old",
+                        title="Old Paper",
+                        url="https://arxiv.org/abs/old",
+                        paper_key="arxiv-old",
+                        status="cached",
+                        evidence="full_text_pdf",
+                        note_path=str(old_note),
+                    ),
+                    DeepReadItem(
+                        rank=2,
+                        canonical_id="arxiv:new",
+                        title="New Paper",
+                        url="https://arxiv.org/abs/new",
+                        paper_key="arxiv-new",
+                        status="complete",
+                        evidence="full_text_pdf",
+                        note_path=str(new_note),
+                    ),
+                ],
+                index_path=str(index),
+            )
+            history = DeliveryHistory(root / "delivery" / "history.json")
+            history.record("deep_read", "arxiv:old", title="Old Paper", target_date="2026-08-28")
+
+            deliveries = publish_deep_read_run(self.config, run, history=history)
+
+            self.assertEqual(len(deliveries), 2)
+            self.assertEqual(publish.call_count, 2)
+            summary = publish.call_args_list[0].args[1]
+            self.assertIn("新增 1 篇", summary)
+            self.assertIn("历史重复跳过 1", summary)
+            discord_index = index.with_name("discord-index.md")
+            self.assertIn("New Paper", discord_index.read_text(encoding="utf-8"))
+            self.assertNotIn("Old Paper", discord_index.read_text(encoding="utf-8"))
+            self.assertTrue(history.contains("deep_read", "arxiv:new"))
+
+            self.assertEqual(publish_deep_read_run(self.config, run, history=history), [])
+            self.assertEqual(publish.call_count, 2)
 
 
 if __name__ == "__main__":

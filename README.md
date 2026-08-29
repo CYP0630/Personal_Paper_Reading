@@ -141,6 +141,21 @@ also attached when available. The installed Hermes `paper-reading` skill uses
 the same commands for URLs and Discord PDF attachments, so interactive and
 scheduled reading share one archive and quality contract.
 
+Scheduled delivery is deduplicated after Top-8 selection. Successful sends are
+recorded by canonical paper ID in
+`~/.local/share/paper-radar/delivery/history.json`, with independent
+`discovery` and `deep_read` lanes so the morning digest does not suppress that
+day's full reading. The complete Top 8 remains in the inbox, digest, daily
+index, and manifest; Discord receives only papers that have not previously
+been sent in the corresponding lane. A filtered `discord-index.md` accompanies
+new deep reads. If every selected paper is already in delivery history, no
+empty Discord message is sent. Explicit `paper-radar read --publish` requests
+still resend the requested paper and add it to deep-reading history.
+
+On the first run after this feature is installed, history is bootstrapped from
+earlier inboxes and successful reading manifests, excluding the current date.
+This prevents an upgrade from immediately re-sending the existing archive.
+
 ## Workstation deployment
 
 The production layout keeps generated data and caches outside the Git working
@@ -150,6 +165,10 @@ tree:
 - secret environment: `~/.config/paper-radar/env` (mode `0600`);
 - JSON and Markdown output: `~/.local/share/paper-radar`;
 - HTTP cache: `~/.cache/paper-radar`.
+
+Generated delivery state is also outside Git at
+`~/.local/share/paper-radar/delivery/history.json`; it must be preserved with
+the runtime data directory when moving the service to another machine.
 
 The workstation also needs Codex CLI. The repository includes a checksum-
 verified, user-local Linux installer pinned to a known release:

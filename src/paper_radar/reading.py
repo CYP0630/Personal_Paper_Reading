@@ -8,13 +8,14 @@ import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
 
 from paper_radar.config import ResearchConfig
 from paper_radar.delivery import DeliveryResult, publish_with_hermes
+from paper_radar.delivery_history import DeliveryHistory
 
 
 REQUIRED_SECTIONS = (
@@ -562,14 +563,32 @@ def publish_deep_read_run(
     run: DeepReadRun,
     *,
     target_override: str | None = None,
+    history: DeliveryHistory | None = None,
 ) -> list[DeliveryResult]:
+    successful = [item for item in run.items if item.successful and item.note_path]
+    pending = [
+        item
+        for item in successful
+        if history is None or not history.contains("deep_read", item.canonical_id)
+    ]
+    if not pending:
+        return []
+
+    skipped = len(successful) - len(pending)
+    delivery_run = replace(run, items=pending, index_path="", manifest_path="")
+    delivery_index_path: Path | None = None
+    if run.index_path:
+        delivery_index_path = Path(run.index_path).with_name("discord-index.md")
+        delivery_run.index_path = str(delivery_index_path)
+        DeepReader._atomic_write(delivery_index_path, render_reading_index(delivery_run))
+
     results: list[DeliveryResult] = []
     summary = (
-        f"**{run.target_date} · Top {len(run.items)} 精读**\n"
-        f"完成 {run.successful_count} · 失败 {run.failed_count}\n"
+        f"**{run.target_date} · 新增 {len(pending)} 篇精读**\n"
+        f"Top {len(run.items)} · 历史重复跳过 {skipped} · 失败 {run.failed_count}\n"
         "每篇完整笔记以 Markdown 附件发送；关键图可用时一并附上。"
     )
-    index_attachments = [run.index_path] if run.index_path else []
+    index_attachments = [delivery_index_path] if delivery_index_path else []
     results.append(
         publish_with_hermes(
             config,
@@ -579,9 +598,7 @@ def publish_deep_read_run(
             attachments=index_attachments,
         )
     )
-    for item in run.items:
-        if not item.successful or not item.note_path:
-            continue
+    for item in pending:
         evidence = {
             "full_text_pdf": "全文 PDF 精读",
             "web_page": "网页材料阅读（有限证据）",
@@ -603,6 +620,13 @@ def publish_deep_read_run(
                 timeout_seconds=180,
             )
         )
+        if history is not None:
+            history.record(
+                "deep_read",
+                item.canonical_id,
+                title=item.title,
+                target_date=run.target_date,
+            )
     return results
 
 

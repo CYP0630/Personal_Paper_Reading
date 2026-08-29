@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import replace
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from paper_radar.config import ResearchConfig
 from paper_radar.delivery import DeliveryError, publish_with_hermes
+from paper_radar.delivery_history import DeliveryHistory
 from paper_radar.pipeline import SOURCE_FACTORIES, discover
 from paper_radar.reading import (
     DeepReadError,
@@ -102,6 +104,12 @@ def run_discover(args: argparse.Namespace) -> int:
     timezone = ZoneInfo(config.raw.get("profile", {}).get("timezone", "UTC"))
     now = datetime.now(timezone)
     target = date.fromisoformat(args.date) if args.date else now.date()
+    output_root = Path(args.output_root).expanduser().resolve()
+    history = (
+        DeliveryHistory.for_output_root(output_root, exclude_date=target.isoformat())
+        if args.publish
+        else None
+    )
     # Use a stable daily boundary so cache keys are reproducible throughout the day.
     until = datetime.combine(target, time.max, tzinfo=timezone)
     lookback = args.lookback_days or int(config.daily_settings()["lookback_days"])
@@ -127,18 +135,34 @@ def run_discover(args: argparse.Namespace) -> int:
     if not args.no_write:
         json_path, markdown_path = write_outputs(
             result,
-            output_root=Path(args.output_root).expanduser().resolve(),
+            output_root=output_root,
             target_date=target.isoformat(),
         )
         print(f"json: {json_path}")
         print(f"digest: {markdown_path}")
     if args.publish:
-        delivery = publish_with_hermes(
-            config,
-            render_discord(result, target_date=target.isoformat()),
-            target_override=args.publish_target,
-        )
-        print(f"published: {delivery.provider} -> {delivery.target}")
+        assert history is not None
+        new_papers = [
+            paper for paper in result.selected if not history.contains("discovery", paper.canonical_id)
+        ]
+        skipped = len(result.selected) - len(new_papers)
+        if new_papers:
+            delivery = publish_with_hermes(
+                config,
+                render_discord(replace(result, selected=new_papers), target_date=target.isoformat()),
+                target_override=args.publish_target,
+            )
+            history.record_many(
+                "discovery",
+                ((paper.canonical_id, paper.title) for paper in new_papers),
+                target_date=target.isoformat(),
+            )
+            print(
+                f"published: {delivery.provider} -> {delivery.target} "
+                f"new={len(new_papers)} skipped_duplicates={skipped}"
+            )
+        else:
+            print(f"published: skipped; new=0 skipped_duplicates={skipped}")
     return 0 if result.selected or not result.source_errors else 2
 
 
@@ -150,10 +174,16 @@ def run_deep_read(args: argparse.Namespace) -> int:
     limit = args.max_papers or int(settings.get("max_papers", config.daily_settings()["digest_size"]))
     if limit < 1:
         raise ValueError("--max-papers must be positive")
+    output_root = Path(args.output_root).expanduser().resolve()
+    history = (
+        DeliveryHistory.for_output_root(output_root, exclude_date=target.isoformat())
+        if args.publish
+        else None
+    )
     input_path = Path(args.input_root).expanduser().resolve() / "data" / "inbox" / f"{target.isoformat()}.json"
     runner = DeepReader(
         config,
-        output_root=Path(args.output_root),
+        output_root=output_root,
         workdir=Path(args.workdir),
         codex_executable=args.codex,
         force=args.force,
@@ -165,13 +195,27 @@ def run_deep_read(args: argparse.Namespace) -> int:
     print(f"index: {run.index_path}")
     print(f"manifest: {run.manifest_path}")
     if args.publish:
-        deliveries = publish_deep_read_run(config, run, target_override=args.publish_target)
-        print(f"published: {len(deliveries)} Hermes messages")
+        assert history is not None
+        successful = [item for item in run.items if item.successful and item.note_path]
+        pending = [
+            item for item in successful if not history.contains("deep_read", item.canonical_id)
+        ]
+        deliveries = publish_deep_read_run(
+            config,
+            run,
+            target_override=args.publish_target,
+            history=history,
+        )
+        print(
+            f"published: {len(deliveries)} Hermes messages "
+            f"new={len(pending)} skipped_duplicates={len(successful) - len(pending)}"
+        )
     return 0 if run.items and run.failed_count == 0 else 2
 
 
 def run_read(args: argparse.Namespace) -> int:
     config = ResearchConfig.load(args.config)
+    output_root = Path(args.output_root).expanduser().resolve()
     local_pdf: Path | None = None
     if args.url:
         paper = paper_from_url(
@@ -197,7 +241,7 @@ def run_read(args: argparse.Namespace) -> int:
         }
     runner = DeepReader(
         config,
-        output_root=Path(args.output_root),
+        output_root=output_root,
         workdir=Path(args.workdir),
         codex_executable=args.codex,
         force=args.force,
@@ -206,6 +250,13 @@ def run_read(args: argparse.Namespace) -> int:
     print(f"paper: {item.status} {item.paper_key} {item.note_path or item.error}")
     if args.publish:
         delivery = publish_deep_read_item(config, item, target_override=args.publish_target)
+        history = DeliveryHistory.for_output_root(output_root)
+        history.record(
+            "deep_read",
+            item.canonical_id,
+            title=item.title,
+            target_date=datetime.now().astimezone().date().isoformat(),
+        )
         print(f"published: {delivery.provider} -> {delivery.target}")
     return 0 if item.successful else 2
 
